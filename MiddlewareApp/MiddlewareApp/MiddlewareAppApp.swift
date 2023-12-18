@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MiddlewareRum
 
 @main
 struct MiddlewareAppApp: App {
