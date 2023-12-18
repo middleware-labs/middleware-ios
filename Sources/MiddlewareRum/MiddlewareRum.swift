@@ -19,22 +19,41 @@ public class MiddlewareRum: NSObject {
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
-                                      headers: [("Origin","sdk.middleware.io"),
-                                                ("Content-Type", "application/json")]))
+                                      headers: [
+                                        ("Origin","sdk.middleware.io"),
+                                        ("Access-Control-Allow-Headers", "*")
+                                      ]
+                                     ),
+            envVarHeaders: [
+                ("Origin","sdk.middleware.io"),
+                ("Access-Control-Allow-Headers", "*")
+              ]
+        )
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
             .with(resource: createMiddlewareResource(builder: builder))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
-                SimpleSpanProcessor(spanExporter: MultiSpanExporter(spanExporters: [StdoutExporter(), otlpTraceExporter]))])
-                .build())
+                BatchSpanProcessor(spanExporter: otlpTraceExporter),
+                SimpleSpanProcessor(spanExporter: StdoutExporter())
+            ]).build()
+        )
         
         
         let otlpMetricExporter = OtlpHttpMetricExporter(
             endpoint: URL(string: builder.target! + "/v1/metrics")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
-                                      headers: [("Origin", "sdk.middleware.io"),
-                                                ("Content-Type", "application/json")]))
+                                      headers: [
+                                        ("Origin", "sdk.middleware.io"),
+                                        ("Access-Control-Allow-Headers", "*")
+                                      ]
+                                     ),
+            envVarHeaders: [
+                ("Origin","sdk.middleware.io"),
+                ("Access-Control-Allow-Headers", "*")
+              ]
+            
+        )
         OpenTelemetry.registerMeterProvider(meterProvider:
                                                 MeterProviderSdk(
                                                     metricProcessor: MetricProcessorSdk(),
@@ -45,7 +64,18 @@ public class MiddlewareRum: NSObject {
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
-                                       headers:[("Origin", "sdk.middleware.io"),                    ("Content-Type", "application/json")]))
+                                       headers:[
+                                        ("Origin", "sdk.middleware.io"),
+                                        ("Access-Control-Allow-Headers", "*")
+                                       ]
+                                      ),
+            envVarHeaders: [
+                ("Origin","sdk.middleware.io"),
+                ("Access-Control-Allow-Headers", "*")
+              ]
+        )
+        
+        
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
             .with(resource: createMiddlewareResource(builder: builder))
@@ -64,6 +94,7 @@ public class MiddlewareRum: NSObject {
             setGlobalAttributes(["environment": builder.deploymentEnvironment!])
         }
         mwInit.end()
+        
         return MiddlewareRum()
     }
     

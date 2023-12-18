@@ -6,20 +6,24 @@
 //
 
 import SwiftUI
-//import middlewarerum
 import MiddlewareRum
+
 
 @main
 struct MiddlewareAppApp: App {
     init() {
-//        MiddlwareRumBuilder
-//            .target("https://demo.middleware.io")
-//            .serviceName("Mobile-SDK-ios")
-//            .projectName("Mobile-SDK-ios")
-//            .rumAccessToken("sometoken")
-//            .deploymentEnvironment("PROD")
-//            .globalAttributes()
-//            .build()
+        do {
+            try MiddlewareRumBuilder()
+                .target("<target>")
+                .serviceName("Mobile-SDK-iOS")
+                .projectName("Mobile-SDK-iOS")
+                .rumAccessToken("<rum-token>")
+                .deploymentEnvironment("PROD")
+                .build()
+        } catch {
+            print("Failed to initialize \(error)")
+        }
+        
     }
     var body: some Scene {
         WindowGroup {
