@@ -19,7 +19,7 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "MiddlewareRum",
-            dependencies: ["OpenTelemetrySdk"]
+            dependencies: ["opentelemetry-swift"]
         ),
         .testTarget(
             name: "MiddlewareRumTests",
