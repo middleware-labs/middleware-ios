@@ -4,8 +4,8 @@ import Foundation
 
 public class MiddlewareRumBuilder: NSObject {
     public var target: String?
-    private var serviceName: String?
-    private var projectName: String?
+    public var serviceName: String?
+    public var projectName: String?
     public var rumAccessToken: String?
     public var deploymentEnvironment: String?
     public var globalAttributes: [String: Any]? = [:]

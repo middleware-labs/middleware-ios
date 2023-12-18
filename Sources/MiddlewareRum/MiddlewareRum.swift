@@ -21,12 +21,13 @@ public class MiddlewareRum: NSObject {
             config: OtlpConfiguration(timeout: TimeInterval(10000),
                                       headers: [("Origin","sdk.middleware.io"),
                                                 ("Content-Type", "application/json")]))
+        
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
-
+            .with(resource: createMiddlewareResource(builder: builder))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
                 SimpleSpanProcessor(spanExporter: MultiSpanExporter(spanExporters: [StdoutExporter(), otlpTraceExporter]))])
-            .build())
+                .build())
         
         
         let otlpMetricExporter = OtlpHttpMetricExporter(
@@ -35,13 +36,19 @@ public class MiddlewareRum: NSObject {
                                       headers: [("Origin", "sdk.middleware.io"),
                                                 ("Content-Type", "application/json")]))
         OpenTelemetry.registerMeterProvider(meterProvider:
-                                                MeterProviderSdk(metricProcessor: MetricProcessorSdk(), metricExporter: otlpMetricExporter))
+                                                MeterProviderSdk(
+                                                    metricProcessor: MetricProcessorSdk(),
+                                                    metricExporter: otlpMetricExporter,
+                                                    metricPushInterval: 10000,
+                                                    resource: createMiddlewareResource(builder: builder)))
         
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
                                        headers:[("Origin", "sdk.middleware.io"),                    ("Content-Type", "application/json")]))
+        
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
+            .with(resource: createMiddlewareResource(builder: builder))
             .with(processors: [SimpleLogRecordProcessor(logRecordExporter: otlpLogExporter)])
             .build())
         let tracer = OpenTelemetry.instance.tracerProvider.get(
@@ -95,9 +102,19 @@ public class MiddlewareRum: NSObject {
                 nop()
             }
         })
-
+        
     }
-
+    
+    class func createMiddlewareResource(builder: MiddlewareRumBuilder) -> Resource {
+        return Resource(attributes: [
+            "mw.account_key" :AttributeValue(builder.rumAccessToken!),
+            "service.name" : AttributeValue(builder.serviceName!),
+            "browser.trace" : AttributeValue(true),
+            "browser.mobile" : AttributeValue(true),
+            "project.name":AttributeValue(builder.projectName!)
+        ])
+    }
+    
     
     public class func addEvent(name: String, attributes: NSDictionary) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
