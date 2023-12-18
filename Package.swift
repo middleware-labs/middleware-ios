@@ -25,8 +25,11 @@ let package = Package(
             name: "MiddlewareRum",
             dependencies: [
                 .product(name: "OpenTelemetryApi", package: "opentelemetry-swift"),
-                .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift")
-            ]
+                .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift"),
+                .product(name: "OpenTelemetryProtocolExporterHTTP", package: "opentelemetry-swift"),
+                .product(name: "StdoutExporter", package: "opentelemetry-swift")
+            ],
+            path: "Sources"
         ),
         .testTarget(
             name: "MiddlewareRumTests",
