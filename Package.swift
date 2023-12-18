@@ -17,6 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.8.0"),
+        .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -27,7 +28,8 @@ let package = Package(
                 .product(name: "OpenTelemetryApi", package: "opentelemetry-swift"),
                 .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift"),
                 .product(name: "OpenTelemetryProtocolExporterHTTP", package: "opentelemetry-swift"),
-                .product(name: "StdoutExporter", package: "opentelemetry-swift")
+                .product(name: "StdoutExporter", package: "opentelemetry-swift"),
+                .product(name: "DeviceKit", package: "DeviceKit")
             ],
             path: "Sources"
         ),

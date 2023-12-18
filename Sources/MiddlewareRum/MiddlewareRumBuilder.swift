@@ -6,9 +6,9 @@ public class MiddlewareRumBuilder: NSObject {
     public var target: String?
     private var serviceName: String?
     private var projectName: String?
-    private var rumAccessToken: String?
-    private var deploymentEnvironment: String?
-    private var globalAttributes: [String: Any]?
+    public var rumAccessToken: String?
+    public var deploymentEnvironment: String?
+    public var globalAttributes: [String: Any]? = [:]
     
     public func target(_ target: String) -> MiddlewareRumBuilder {
         self.target = target
