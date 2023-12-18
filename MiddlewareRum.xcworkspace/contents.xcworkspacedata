@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:MiddlewareApp/MiddlewareApp.xcodeproj">
+      location = "group:Examples/MiddlewareApp/MiddlewareApp.xcodeproj">
    </FileRef>
 </Workspace>
