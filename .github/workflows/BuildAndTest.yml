@@ -7,7 +7,9 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: swift-actions/setup-swift@v1
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
     - name: Build and Test for macOS
       run: swift test --enable-code-coverage
     - name: Upload Code coverage
@@ -20,7 +22,9 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: swift-actions/setup-swift@v1
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for iOS
@@ -31,7 +35,9 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: swift-actions/setup-swift@v1
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for tvOS
@@ -42,11 +48,12 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: swift-actions/setup-swift@v1
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for watchOS
       run: make build-for-testing-watchos
     - name: Test for watchOS
       run: make test-without-building-watchos
-
