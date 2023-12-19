@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   macOS:
-    runs-on: macOS-14
+    runs-on: macOS-13
     steps:
     - uses: actions/checkout@v2
     - uses: maxim-lobanov/setup-xcode@v1
@@ -19,7 +19,7 @@ jobs:
         xcrun llvm-cov export -ignore-filename-regex="pb\.swift|grpc\.swift" -format="lcov" .build/debug/middleware-iosPackageTests.xctest/Contents/MacOS/middleware-iosPackageTests -instr-profile .build/debug/codecov/default.profdata > .build/debug/codecov/coverage_report.lcov
         ./codecov -f .build/debug/codecov/coverage_report.lcov
   iOS:
-    runs-on: macOS-14
+    runs-on: macOS-13
     steps:
     - uses: actions/checkout@v2
     - uses: maxim-lobanov/setup-xcode@v1
@@ -32,7 +32,7 @@ jobs:
     - name: Test for iOS
       run: make test-without-building-ios
   tvOS:
-    runs-on: macOS-14
+    runs-on: macOS-13
     steps:
     - uses: actions/checkout@v2
     - uses: maxim-lobanov/setup-xcode@v1
@@ -45,7 +45,7 @@ jobs:
     - name: Test for tvOS
       run: make test-without-building-tvos
   watchOS:
-    runs-on: macOS-14
+    runs-on: macOS-13
     steps:
     - uses: actions/checkout@v2
     - uses: maxim-lobanov/setup-xcode@v1
