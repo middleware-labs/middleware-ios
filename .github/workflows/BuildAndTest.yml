@@ -7,6 +7,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Xcode
+      uses: actions/setup-xcode@v2
+      with:
+        xcode-version: '15.0'
     - name: Build and Test for macOS
       run: swift test --enable-code-coverage
     - name: Upload Code coverage
@@ -19,6 +23,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Xcode
+      uses: actions/setup-xcode@v2
+      with:
+        xcode-version: '15.0'
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for iOS
@@ -29,6 +37,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Xcode
+      uses: actions/setup-xcode@v2
+      with:
+        xcode-version: '15.0'
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for tvOS
@@ -39,6 +51,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Set up Xcode
+      uses: actions/setup-xcode@v2
+      with:
+        xcode-version: '15.0'
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for watchOS
