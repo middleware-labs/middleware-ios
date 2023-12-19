@@ -17,7 +17,7 @@ let globalAttributesLock = NSLock()
 
 public class MiddlewareRum: NSObject {
     
-    internal class func create(builder: MiddlewareRumBuilder) -> MiddlewareRum {
+    internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
@@ -98,9 +98,13 @@ public class MiddlewareRum: NSObject {
             _ = AppLifecycleInstrumentation()
         }
         
+        if(builder.isCrashReportingEnabled()) {
+            installCrashReportingInstrumentation()
+        }
+        
         mwInit.end()
         
-        return MiddlewareRum()
+        return true
     }
     
     public class func setGlobalAttributes(_ attributes: [String: Any]) {
@@ -189,5 +193,97 @@ public class MiddlewareRum: NSObject {
             span.setAttribute(key: attribute.key as? String ?? "", value: AttributeValue(attribute.value) ?? AttributeValue(""))
         }
         span.setStartTime(time: now).startSpan().end(time: now)
+    }
+    
+    
+    /**
+     * Get the Middleware Session ID associated with this instance of the RUM instrumentation library.
+     * Note: this value can change throughout the lifetime of an application instance, so it is
+     * recommended that you do not cache this value, but always retrieve it from here when needed.
+     */
+    public class func getSessionId() -> String {
+        return getRumSessionId()
+    }
+    
+    public class func getOpenTelemetrySdk() -> OpenTelemetry {
+        return OpenTelemetry.instance
+    }
+    
+    /**
+     * Add a custom exception to RUM monitoring. This can be useful for tracking custom error
+     * handling in your application.
+     *
+     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
+     * auto-generated spans.
+     *
+     * @param {NSException} associated with this event.
+     */
+    public class func addException(e: NSException) {
+        let tracer = OpenTelemetry.instance.tracerProvider.get(
+            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: Constants.Global.VERSION_STRING)
+        let now = Date()
+        let typeName = e.name.rawValue
+        let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
+        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
+        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: typeName)
+        if e.reason != nil {
+            span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e.reason!)
+        }
+        let stack = e.callStackSymbols.joined(separator: "\n")
+        if !stack.isEmpty {
+            span.setAttribute(key: Constants.Attributes.EXCEPTION_STACKTRACE, value: stack)
+        }
+        span.end(time: now)
+    }
+    
+    /**
+     * Add a custom errors to RUM monitoring. This can be useful for tracking custom error
+     * handling in your application.
+     *
+     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
+     * auto-generated spans.
+     *
+     * @param {Error} associated with this event.
+     */
+    public class func addError(e: Error) {
+        let tracer = OpenTelemetry.instance.tracerProvider.get(
+            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: Constants.Global.VERSION_STRING)
+        let now = Date()
+        let typeName = String(describing: type(of: e))
+        let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
+        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
+        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: typeName)
+        span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e.localizedDescription)
+        span.end(time: now)
+    }
+    
+    /**
+     * Add a custom error to RUM monitoring. This can be useful for tracking custom error
+     * handling in your application.
+     *
+     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
+     * auto-generated spans.
+     *
+     * @param {String} associated with this event.
+     */
+    public class func addError(e: String) {
+        let tracer = OpenTelemetry.instance.tracerProvider.get(
+            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: Constants.Global.VERSION_STRING)
+        let now = Date()
+        let typeName = "MiddlewareRum.addError(String)"
+        let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
+        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
+        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: "String")
+        span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
+        span.end(time: now)
     }
 }

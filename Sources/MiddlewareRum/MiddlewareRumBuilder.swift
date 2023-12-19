@@ -86,11 +86,20 @@ public class MiddlewareRumBuilder: NSObject {
         return self
     }
     
+    public func disableCrashReportingInstrumentation() -> MiddlewareRumBuilder {
+        configFlags.disableCrashReporting()
+        return self
+    }
+    
     public func isAppLifecycleInstrumentationEnabled() -> Bool {
         return configFlags.isAppLifecycleInstrumentationEnabled()
     }
     
-    public func build() throws -> MiddlewareRum {
+    public func isCrashReportingEnabled() -> Bool {
+        return configFlags.isCrashReportingEnabled()
+    }
+    
+    public func build() throws -> Bool {
         if(rumAccessToken == nil || target == nil || projectName == nil || serviceName == nil) {
             throw MiddlewareError.invalidConfiguration(message: "Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
             

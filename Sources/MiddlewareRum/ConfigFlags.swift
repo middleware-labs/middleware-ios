@@ -7,6 +7,7 @@ class ConfigFlags {
     var networkMonitorEnabled: Bool = true
     var slowRenderingDetectionEnabled: Bool = true
     var appLifecycleInstumentationEnabled: Bool = true
+    var crashReportingEnabled: Bool = true
     
     init () {}
     
@@ -26,6 +27,10 @@ class ConfigFlags {
         self.appLifecycleInstumentationEnabled = false
     }
     
+    func disableCrashReporting(){
+        self.crashReportingEnabled = false
+    }
+    
     func isSlowRenderingEnabled()  -> Bool {
         return slowRenderingDetectionEnabled
     }
@@ -38,4 +43,7 @@ class ConfigFlags {
         return appLifecycleInstumentationEnabled
     }
     
+    func isCrashReportingEnabled() -> Bool {
+        return crashReportingEnabled
+    }
 }
