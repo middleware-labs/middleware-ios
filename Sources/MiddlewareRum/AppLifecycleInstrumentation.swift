@@ -44,7 +44,8 @@ class AppLifecycleInstrumentation {
             event == Constants.LifeCycleEvents.UI_APPLICATION_WILL_ENTER_FOREGROUND_NOTIFICATION {
             if activeSpan == nil {
                 let span = tracer.spanBuilder(spanName: event == Constants.LifeCycleEvents.UI_APPLICATION_WILL_RESIGN_ACTIVE_NOTIFICATION ? Constants.Spans.RESIGNACTIVE : Constants.Spans.ENTER_FOREGROUND).startSpan()
-                span.setAttribute(key: Constants.Attributes.COMPONENT, value: "app-lifecycle")
+                span.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
+                span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
                 self.activeSpan = SpanHolder(span)
             }
         }
@@ -62,7 +63,8 @@ class AppLifecycleInstrumentation {
         if event == Constants.LifeCycleEvents.UI_APPLICATION_WILL_TERMINATE_NOTIFICATION {
             let now = Date()
             let span = tracer.spanBuilder(spanName: Constants.Spans.APP_TERMINATING).setStartTime(time: now).startSpan()
-            span.setAttribute(key: Constants.Attributes.COMPONENT, value: "AppLifecycle")
+            span.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
+            span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
             span.end(time: now)
         }
         
