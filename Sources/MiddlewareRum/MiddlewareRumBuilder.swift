@@ -9,6 +9,11 @@ public class MiddlewareRumBuilder: NSObject {
     public var rumAccessToken: String?
     public var deploymentEnvironment: String?
     public var globalAttributes: [String: Any]? = [:]
+    private var configFlags: ConfigFlags
+    
+    public override init () {
+        configFlags = ConfigFlags()
+    }
     
     public func target(_ target: String) -> MiddlewareRumBuilder {
         self.target = target
@@ -38,6 +43,24 @@ public class MiddlewareRumBuilder: NSObject {
     public func globalAttributes(_ globalAttributes: [String: Any]) -> MiddlewareRumBuilder {
         self.globalAttributes = globalAttributes
         return self
+    }
+    
+    public func disableNetworkMonitoring() -> MiddlewareRumBuilder {
+        configFlags.disableNetworkMonitoring();
+        return self
+    }
+    
+    public func isNetworkMonitoringEnabled() -> Bool {
+        return configFlags.isNetworkMonitoringEnabled()
+    }
+    
+    public func disableSlowRenderingDetection() -> MiddlewareRumBuilder {
+        configFlags.disableSlowRenderingDetection()
+        return self
+    }
+    
+    public func isSlowRenderingDetectionEnabled() -> Bool {
+        return configFlags.isSlowRenderingEnabled()
     }
     
     public func build() throws -> MiddlewareRum {

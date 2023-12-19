@@ -6,6 +6,10 @@ import OpenTelemetryApi
 import OpenTelemetryProtocolExporterCommon
 import OpenTelemetryProtocolExporterHttp
 import StdoutExporter
+import URLSessionInstrumentation
+import NetworkStatus
+import SignPostIntegration
+import ResourceExtension
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
@@ -23,17 +27,14 @@ public class MiddlewareRum: NSObject {
                                         ("Origin","sdk.middleware.io"),
                                         ("Access-Control-Allow-Headers", "*")
                                       ]
-                                     ),
-            envVarHeaders: [
-                ("Origin","sdk.middleware.io"),
-                ("Access-Control-Allow-Headers", "*")
-              ]
+                                     )
         )
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
             .with(resource: createMiddlewareResource(builder: builder))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
+                SignPostIntegration(),
                 BatchSpanProcessor(spanExporter: otlpTraceExporter),
                 SimpleSpanProcessor(spanExporter: StdoutExporter())
             ]).build()
@@ -47,12 +48,7 @@ public class MiddlewareRum: NSObject {
                                         ("Origin", "sdk.middleware.io"),
                                         ("Access-Control-Allow-Headers", "*")
                                       ]
-                                     ),
-            envVarHeaders: [
-                ("Origin","sdk.middleware.io"),
-                ("Access-Control-Allow-Headers", "*")
-              ]
-            
+                                     )
         )
         OpenTelemetry.registerMeterProvider(meterProvider:
                                                 MeterProviderSdk(
@@ -68,14 +64,8 @@ public class MiddlewareRum: NSObject {
                                         ("Origin", "sdk.middleware.io"),
                                         ("Access-Control-Allow-Headers", "*")
                                        ]
-                                      ),
-            envVarHeaders: [
-                ("Origin","sdk.middleware.io"),
-                ("Access-Control-Allow-Headers", "*")
-              ]
+                                      )
         )
-        
-        
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
             .with(resource: createMiddlewareResource(builder: builder))
@@ -93,6 +83,16 @@ public class MiddlewareRum: NSObject {
         if(builder.deploymentEnvironment != nil) {
             setGlobalAttributes(["environment": builder.deploymentEnvironment!])
         }
+        
+        if(builder.isNetworkMonitoringEnabled()) {
+            _ = initializeNetworkMonitoring()
+        }
+        
+        if(builder.isSlowRenderingDetectionEnabled()) {
+            _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration())
+        }
+        
+        initializeNetworkTypeMonitoring()
         mwInit.end()
         
         return MiddlewareRum()
@@ -137,15 +137,29 @@ public class MiddlewareRum: NSObject {
     }
     
     class func createMiddlewareResource(builder: MiddlewareRumBuilder) -> Resource {
-        return Resource(attributes: [
+        var defaultResource = DefaultResources().get()
+        defaultResource.merge(other: Resource(attributes: [
             "mw.account_key" :AttributeValue(builder.rumAccessToken!),
             "service.name" : AttributeValue(builder.serviceName!),
             "browser.trace" : AttributeValue(true),
             "browser.mobile" : AttributeValue(true),
             "project.name":AttributeValue(builder.projectName!)
-        ])
+        ]))
+        return defaultResource
     }
     
+    class func initializeNetworkMonitoring() -> URLSessionInstrumentation {
+        return URLSessionInstrumentation(configuration: URLSessionInstrumentationConfiguration())
+    }
+    
+    class func initializeNetworkTypeMonitoring() {
+        do{
+            let _ = try NetworkStatus()
+        } catch {
+            print("Middleware: Failed to initialize network type detection")
+        }
+        
+    }
     
     public class func addEvent(name: String, attributes: NSDictionary) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
