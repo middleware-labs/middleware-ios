@@ -1,3 +1,6 @@
+# middleware-ios
+[![CI](https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml/badge.svg)](https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml?query=branch%3Amain+)
+
 ## Features
 
 - Access to OpenTelemetry APIs
