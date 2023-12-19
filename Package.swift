@@ -17,7 +17,8 @@ let package = Package(
             targets: ["MiddlewareRum"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.8.0")
+        .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.8.0"),
+        .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -32,7 +33,8 @@ let package = Package(
                 .product(name: "ResourceExtension", package: "opentelemetry-swift"),
                 .product(name: "URLSessionInstrumentation", package: "opentelemetry-swift"),
                 .product(name: "NetworkStatus", package: "opentelemetry-swift"),
-                .product(name: "SignPostIntegration", package: "opentelemetry-swift")
+                .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
+                .product(name: "DeviceKit", package: "DeviceKit")
             ],
             path: "Sources"
         ),
