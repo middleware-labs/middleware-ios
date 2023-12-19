@@ -28,7 +28,7 @@ class SlowRenderingDetector {
     private var previousTimestamp: CFTimeInterval = 0.0
     private var slowFrames: [String: Int] = [:]
     private var frozenFrames: [String: Int] = [:]
-
+    
     private var configuration: SlowRenderingConfiguration
     
     public private(set) var tracer: Tracer
@@ -42,20 +42,20 @@ class SlowRenderingDetector {
         self.configuration = configuration
         start()
     }
-
+    
     func start() {
         if(self.displayLink != nil) {
             return
         }
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.appPaused(notification:)), name: UIApplication.willResignActiveNotification, object: nil)
-
+        
         NotificationCenter.default.addObserver(self, selector: #selector(self.appResumed(notification:)), name: UIApplication.didBecomeActiveNotification, object: nil)
-
+        
         let displayLink = CADisplayLink(target: self, selector: #selector(displayLinkCallback))
         displayLink.add(to: .main, forMode: .common)
         self.displayLink = displayLink
-
+        
         self.timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
             self.flushFrames()
         })
@@ -116,7 +116,7 @@ class SlowRenderingDetector {
             return name
         } 
         return "unknown"
-
+        
     }
     
     func reportFrame(_ type: String, _ activityName: String, _ count: Int) {

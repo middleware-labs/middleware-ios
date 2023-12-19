@@ -149,7 +149,20 @@ public class MiddlewareRum: NSObject {
     }
     
     class func initializeNetworkMonitoring() -> URLSessionInstrumentation {
-        return URLSessionInstrumentation(configuration: URLSessionInstrumentationConfiguration())
+        return URLSessionInstrumentation(configuration: URLSessionInstrumentationConfiguration(
+            shouldInstrument: { URLRequest in
+                guard let url = URLRequest.url?.absoluteString else {
+                    return true
+                }
+                let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces"]
+                
+                for path in excludedPaths {
+                    if url.contains(path) {
+                        return false
+                    }
+                }
+                return true
+            }))
     }
     
     class func initializeNetworkTypeMonitoring() {
