@@ -89,7 +89,7 @@ public class MiddlewareRum: NSObject {
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
-            _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration())
+            _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
         }
         
         initializeNetworkTypeMonitoring()

@@ -10,6 +10,8 @@ public class MiddlewareRumBuilder: NSObject {
     public var deploymentEnvironment: String?
     public var globalAttributes: [String: Any]? = [:]
     private var configFlags: ConfigFlags
+    public var slowFrameDetectionThresholdMs: Double = 16.7
+    public var frozenFrameDetectionThresholdMs: Double = 700
     
     public override init () {
         configFlags = ConfigFlags()
@@ -42,6 +44,16 @@ public class MiddlewareRumBuilder: NSObject {
     
     public func globalAttributes(_ globalAttributes: [String: Any]) -> MiddlewareRumBuilder {
         self.globalAttributes = globalAttributes
+        return self
+    }
+    
+    public func slowFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
+        self.slowFrameDetectionThresholdMs = thresholdMs
+        return self
+    }
+    
+    public func frozenFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
+        self.frozenFrameDetectionThresholdMs = thresholdMs
         return self
     }
     
