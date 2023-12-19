@@ -9,9 +9,10 @@ public class MiddlewareRumBuilder: NSObject {
     public var rumAccessToken: String?
     public var deploymentEnvironment: String?
     public var globalAttributes: [String: Any]? = [:]
-    private var configFlags: ConfigFlags
     public var slowFrameDetectionThresholdMs: Double = 16.7
     public var frozenFrameDetectionThresholdMs: Double = 700
+    public var sessionSamplingRatio: Double = 1.0
+    private var configFlags: ConfigFlags
     
     public override init () {
         configFlags = ConfigFlags()
@@ -57,6 +58,11 @@ public class MiddlewareRumBuilder: NSObject {
         return self
     }
     
+    public func sessionSamplingRatio(samplingRatio: Double) -> MiddlewareRumBuilder {
+        self.sessionSamplingRatio = samplingRatio
+        return self
+    }
+    
     public func disableNetworkMonitoring() -> MiddlewareRumBuilder {
         configFlags.disableNetworkMonitoring();
         return self
@@ -73,6 +79,15 @@ public class MiddlewareRumBuilder: NSObject {
     
     public func isSlowRenderingDetectionEnabled() -> Bool {
         return configFlags.isSlowRenderingEnabled()
+    }
+    
+    public func disableAppLifcycleInstrumentation() -> MiddlewareRumBuilder {
+        configFlags.disableAppLifecycleInstrumentation()
+        return self
+    }
+    
+    public func isAppLifecycleInstrumentationEnabled() -> Bool {
+        return configFlags.isAppLifecycleInstrumentationEnabled()
     }
     
     public func build() throws -> MiddlewareRum {

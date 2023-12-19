@@ -15,7 +15,6 @@ enum Constants {
         static let RUM_SDK_VERSION = "rum.sdk.version"
         static let DEVICE_MODEL_NAME = "device.model.name"
         static let ERROR = "error"
-        static let APPSTART = "appstart"
         static let COUNT = "count"
         static let EVENT_TYPE = "event.type"
         static let OS_NAME = "os.name"
@@ -47,10 +46,26 @@ enum Constants {
         static let NET_HOST_CARRIER_MCC = "net.host.carrier.mcc"
         static let NET_HOST_CARRIER_MNC = "net.host.carrier.mnc"
         static let NET_HOST_CARRIER_ICC = "net.host.carrier.icc"
-       
     }
     enum Spans {
         static let SESSION_ID_CHANGE = "session.id.change"
+        static let RESIGNACTIVE = "ResignActive"
+        static let ENTER_FOREGROUND = "EnterForeground"
+        static let ACTION = "action"
+        static let PRESENTATION_TRANSITION = "PresentationTransition"
+        static let APP_START = "AppStart"
+        static let APP_TERMINATING = "AppTerminating"
+    }
+    
+    enum LifeCycleEvents {
+        static let UI_APPLICATION_WILL_RESIGN_ACTIVE_NOTIFICATION = "UIApplicationWillResignActiveNotification"
+        static let UI_APPLICATION_SUSPENDED_EVENTS_ONLY_NOTIFICATION = "UIApplicationSuspendedEventsOnlyNotification"
+        static let UI_APPLICATION_DID_ENTER_BACKGROUND_NOTIFICATION = "UIApplicationDidEnterBackgroundNotification"
+        static let UI_APPLICATION_WILL_ENTER_FOREGROUND_NOTIFICATION = "UIApplicationWillEnterForegroundNotification"
+        static let UI_APPLICATION_DID_BECOME_ACTIVE_ACTIVE_NOTIFICATION = "UIApplicationDidBecomeActiveNotification"
+        static let UI_APPLICATION_SUSPENDED_NOTIFICATION = "UIApplicationSuspendedNotification"
+        static let UI_APPLICATION_WILL_TERMINATE_NOTIFICATION = "UIApplicationWillTerminateNotification"
+        
     }
 }
 

@@ -18,7 +18,6 @@ let globalAttributesLock = NSLock()
 public class MiddlewareRum: NSObject {
     
     internal class func create(builder: MiddlewareRumBuilder) -> MiddlewareRum {
-        
         middlewareRumInitTime = Date()
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
@@ -32,6 +31,7 @@ public class MiddlewareRum: NSObject {
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
             .with(resource: createMiddlewareResource(builder: builder))
+            .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
                 SignPostIntegration(),
@@ -93,6 +93,11 @@ public class MiddlewareRum: NSObject {
         }
         
         initializeNetworkTypeMonitoring()
+        
+        if(builder.isAppLifecycleInstrumentationEnabled()) {
+            _ = AppLifecycleInstrumentation()
+        }
+        
         mwInit.end()
         
         return MiddlewareRum()
@@ -185,5 +190,4 @@ public class MiddlewareRum: NSObject {
         }
         span.setStartTime(time: now).startSpan().end(time: now)
     }
-    
 }

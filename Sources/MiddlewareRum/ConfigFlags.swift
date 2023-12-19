@@ -6,6 +6,7 @@ class ConfigFlags {
     var debugEnabled: Bool = false
     var networkMonitorEnabled: Bool = true
     var slowRenderingDetectionEnabled: Bool = true
+    var appLifecycleInstumentationEnabled: Bool = true
     
     init () {}
     
@@ -21,12 +22,20 @@ class ConfigFlags {
         self.slowRenderingDetectionEnabled = false
     }
     
+    func disableAppLifecycleInstrumentation() {
+        self.appLifecycleInstumentationEnabled = false
+    }
+    
     func isSlowRenderingEnabled()  -> Bool {
         return slowRenderingDetectionEnabled
     }
     
     func isNetworkMonitoringEnabled() -> Bool{
         return networkMonitorEnabled
+    }
+    
+    func isAppLifecycleInstrumentationEnabled() -> Bool {
+        return appLifecycleInstumentationEnabled
     }
     
 }
