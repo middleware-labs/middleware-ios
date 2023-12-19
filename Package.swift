@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "MiddlewareRum",
+    name: "middleware-ios",
     platforms: [
         .iOS(.v13),
         .macOS(.v10_15),
