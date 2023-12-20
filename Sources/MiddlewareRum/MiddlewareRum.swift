@@ -97,10 +97,10 @@ public class MiddlewareRum: NSObject {
         if(builder.isAppLifecycleInstrumentationEnabled()) {
             _ = AppLifecycleInstrumentation()
         }
-        
-        if(builder.isCrashReportingEnabled()) {
-            installCrashReportingInstrumentation()
-        }
+//        
+//        if(builder.isCrashReportingEnabled()) {
+//            installCrashReportingInstrumentation()
+//        }
         
         mwInit.end()
         
@@ -290,5 +290,9 @@ public class MiddlewareRum: NSObject {
         span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: "String")
         span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
+    }
+    
+    public func startCrashReporting() {
+        installCrashReportingInstrumentation()
     }
 }
