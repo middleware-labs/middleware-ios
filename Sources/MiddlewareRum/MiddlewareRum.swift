@@ -292,7 +292,7 @@ public class MiddlewareRum: NSObject {
         span.end(time: now)
     }
     
-    public func startCrashReporting() {
+    public class func startCrashReporting() {
         installCrashReportingInstrumentation()
     }
 }
