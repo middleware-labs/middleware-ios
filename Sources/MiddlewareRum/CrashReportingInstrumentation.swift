@@ -5,6 +5,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 import CrashReporter
 
+private var ogCrashReporter: PLCrashReporter?
 private var customDataDictionary: [String: String] = [String: String]()
 private var tracer = OpenTelemetry.instance.tracerProvider.get(
     instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
@@ -36,59 +37,58 @@ func installCrashReportingInstrumentation() {
         print("MiddlewareRum: Failed to enable crash reporting instrumentation.")
         return
     }
-    
+    ogCrashReporter = crashReporter
     print("MiddlewareRum: Enabled crash reporting instrumentation.")
-    setSessionId(crashReporter!)
-    setDeviceStats(crashReporter!)
-    startPollingForDeviceStats(crashReporter!)
+    setSessionId()
+    setDeviceStats()
+    startPollingForDeviceStats()
     if(crashReporter!.hasPendingCrashReport()) {
         return
     }
-    setPendingCrashReport(crashReporter: crashReporter!)
+    setPendingCrashReport()
     crashReporter?.purgePendingCrashReport()
 }
 
-private func startPollingForDeviceStats(_ crashReporter: PLCrashReporter) {
+private func startPollingForDeviceStats() {
     let repeatSeconds: Double = 5
     DispatchQueue.global(qos: .background).async {
         let timer = Timer.scheduledTimer(withTimeInterval: repeatSeconds, repeats: true) { _ in
-            setDeviceStats(crashReporter)
+            setDeviceStats()
         }
         timer.fire()
     }
 }
 
-private func setSessionId(_ crashReporter: PLCrashReporter) {
+private func setSessionId() {
     do {
         customDataDictionary["sessionId"] = getRumSessionId()
         let customData = try NSKeyedArchiver.archivedData(withRootObject: customDataDictionary, requiringSecureCoding: false)
-        crashReporter.customData = customData
+        ogCrashReporter?.customData = customData
     } catch {
         print("MiddlewareRum: Failed to add sessionId to crash report.")
     }
     
 }
 
-private func setDeviceStats(_ crashReporter: PLCrashReporter) {
+private func setDeviceStats() {
     do {
         customDataDictionary["batteryLevel"] = DeviceStats.batteryLevel
         customDataDictionary["freeDiskSpace"] = DeviceStats.freeDiskSpace
         customDataDictionary["freeMemory"] = DeviceStats.freeMemory
         let customData = try NSKeyedArchiver.archivedData(withRootObject: customDataDictionary, requiringSecureCoding: false)
-        crashReporter.customData = customData
+        ogCrashReporter?.customData = customData
     } catch {
         print("MiddlewareRum: Failed to add device stats to crash report.")
     }
 }
 
-private func setPendingCrashReport(crashReporter: PLCrashReporter) {
+private func setPendingCrashReport() {
     do {
-        let data = crashReporter.loadPendingCrashReportData()
+        let data = ogCrashReporter?.loadPendingCrashReportData()
         try sendingCrashReport(data)
     } catch {
         print("MiddlewareRum: Failed to send crash report.")
     }
-    crashReporter.purgePendingCrashReport()
 }
 
 
