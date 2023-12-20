@@ -44,7 +44,16 @@ let package = Package(
             name: "MiddlewareRumTests",
             dependencies: [
                 "MiddlewareRum",
+                .product(name: "OpenTelemetryApi", package: "opentelemetry-swift"),
+                .product(name: "OpenTelemetrySdk", package: "opentelemetry-swift"),
+                .product(name: "OpenTelemetryProtocolExporterHTTP", package: "opentelemetry-swift"),
+                .product(name: "StdoutExporter", package: "opentelemetry-swift"),
+                .product(name: "ResourceExtension", package: "opentelemetry-swift"),
+                .product(name: "URLSessionInstrumentation", package: "opentelemetry-swift"),
+                .product(name: "NetworkStatus", package: "opentelemetry-swift"),
+                .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
+                .product(name: "DeviceKit", package: "DeviceKit")
             ]),
     ]
 )
