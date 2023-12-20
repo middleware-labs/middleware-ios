@@ -12,22 +12,18 @@ import MiddlewareRum
 @main
 struct MiddlewareAppApp: App {
     init() {
-        do {
-            try MiddlewareRumBuilder()
+        MiddlewareRumBuilder()
+            .globalAttributes(["some" : "value"])
                 .target("<target>")
-                .serviceName("Mobile-SDK-iOS")
-                .projectName("Mobile-SDK-iOS")
+            .serviceName("Mobile-SDK-Android")
+            .projectName("Mobile-SDK-Android")
                 .rumAccessToken("<rum-token>")
-                .deploymentEnvironment("PROD")
-                .build()
-        } catch {
-            print("Failed to initialize \(error)")
-        }
-        
+            .deploymentEnvironment("PROD")
+            .build()
     }
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SampleView()
         }
     }
 }
