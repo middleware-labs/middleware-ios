@@ -45,7 +45,7 @@ func installCrashReportingInstrumentation() {
         return
     }
     setPendingCrashReport(crashReporter: crashReporter!)
-    
+    crashReporter?.purgePendingCrashReport()
 }
 
 private func startPollingForDeviceStats(_ crashReporter: PLCrashReporter) {
