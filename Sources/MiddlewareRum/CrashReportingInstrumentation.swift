@@ -41,9 +41,6 @@ func installCrashReportingInstrumentation() {
     setSessionId(crashReporter!)
     setDeviceStats(crashReporter!)
     startPollingForDeviceStats(crashReporter!)
-    MiddlewareRum.addSessionIdChangeCallback {
-        setSessionId(crashReporter!)
-    }
     if(crashReporter!.hasPendingCrashReport()) {
         return
     }
