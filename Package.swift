@@ -35,7 +35,7 @@ let package = Package(
                 .product(name: "URLSessionInstrumentation", package: "opentelemetry-swift"),
                 .product(name: "NetworkStatus", package: "opentelemetry-swift"),
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
-                .product(name: "CrashReporter", package: "plcrashreporter"),
+                .product(name: "CrashReporter", package: "PLCrashReporter"),
                 .product(name: "DeviceKit", package: "DeviceKit")
             ],
             path: "Sources"
