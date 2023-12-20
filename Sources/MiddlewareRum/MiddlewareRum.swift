@@ -205,6 +205,10 @@ public class MiddlewareRum: NSObject {
         return getRumSessionId()
     }
     
+    public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
+        addSessionIdCallback(callback)
+    }
+    
     public class func getOpenTelemetrySdk() -> OpenTelemetry {
         return OpenTelemetry.instance
     }
