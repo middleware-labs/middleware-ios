@@ -99,7 +99,7 @@ public class MiddlewareRumBuilder: NSObject {
         return configFlags.isCrashReportingEnabled()
     }
     
-    public func build() throws -> Bool {
+    public func build() -> Bool {
         if(rumAccessToken == nil || target == nil || projectName == nil || serviceName == nil) {
             print("Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
             return false
