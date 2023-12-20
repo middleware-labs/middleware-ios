@@ -101,7 +101,8 @@ public class MiddlewareRumBuilder: NSObject {
     
     public func build() throws -> Bool {
         if(rumAccessToken == nil || target == nil || projectName == nil || serviceName == nil) {
-            throw MiddlewareError.invalidConfiguration(message: "Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
+            print("Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
+            return false
             
         }
         return MiddlewareRum.create(builder: self)
