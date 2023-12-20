@@ -236,6 +236,7 @@ public class MiddlewareRum: NSObject {
         if !stack.isEmpty {
             span.setAttribute(key: Constants.Attributes.EXCEPTION_STACKTRACE, value: stack)
         }
+        span.addEvent(name: "exception")
         span.end(time: now)
     }
     
