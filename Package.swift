@@ -42,6 +42,9 @@ let package = Package(
         ),
         .testTarget(
             name: "MiddlewareRumTests",
-            dependencies: ["MiddlewareRum"]),
+            dependencies: [
+                "MiddlewareRum",
+                .product(name: "CrashReporter", package: "PLCrashReporter"),
+            ]),
     ]
 )
