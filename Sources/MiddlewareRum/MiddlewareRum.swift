@@ -12,6 +12,7 @@ import SignPostIntegration
 import ResourceExtension
 import WebKit
 
+
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
@@ -20,6 +21,10 @@ public class MiddlewareRum: NSObject {
     
     internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
+        
+        var resource = Resource.init()
+        resource.merge(other: createMiddlewareResource(builder: builder))
+        
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
@@ -31,7 +36,6 @@ public class MiddlewareRum: NSObject {
         )
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
-            .with(resource: createMiddlewareResource(builder: builder))
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
@@ -42,7 +46,7 @@ public class MiddlewareRum: NSObject {
         )
         
         
-        let otlpMetricExporter = OtlpHttpMetricExporter(
+        let otlpMetricExporter = StableOtlpHTTPMetricExporter(
             endpoint: URL(string: builder.target! + "/v1/metrics")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
                                       headers: [
@@ -52,18 +56,21 @@ public class MiddlewareRum: NSObject {
                                      )
         )
         
+        OpenTelemetry.registerStableMeterProvider(meterProvider: StableMeterProviderSdk
+            .builder()
+            .registerMetricReader(reader:
+                                    StablePeriodicMetricReaderBuilder(exporter: otlpMetricExporter)
+                                        .setInterval(timeInterval: 5)
+                                        .build()
+                                 )
+                .build()
+        )
         
-        let meterProviderSdk = MeterProviderSdk(
-            metricProcessor: MetricProcessorSdk(),
-            metricExporter: otlpMetricExporter,
-            metricPushInterval: 5000,
-            resource: createMiddlewareResource(builder: builder))
-        OpenTelemetry.registerMeterProvider(meterProvider: meterProviderSdk)
+        var userCounter = OpenTelemetry.instance.stableMeterProvider?.get(name: Constants.Global.INSTRUMENTATION_NAME)
+            .counterBuilder(name: "user.status")
+            .build()
+        userCounter?.add(value: 1, attribute: resource.attributes)
         
-        OpenTelemetry.instance.meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
-            .createIntCounter(name: "user.status", monotonic: true)
-            .add(value: Int(1), labels: ["session.id" : getRumSessionId()])
-            
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
