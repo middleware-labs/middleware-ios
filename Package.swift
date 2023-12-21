@@ -20,6 +20,7 @@ let package = Package(
         .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.8.0"),
         .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
         .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.3"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -36,7 +37,8 @@ let package = Package(
                 .product(name: "NetworkStatus", package: "opentelemetry-swift"),
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
-                .product(name: "DeviceKit", package: "DeviceKit")
+                .product(name: "DeviceKit", package: "DeviceKit"),
+                .product(name: "Logging", package: "swift-log")
             ],
             path: "Sources"
         ),

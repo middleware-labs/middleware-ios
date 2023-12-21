@@ -4,6 +4,9 @@ import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import CrashReporter
+import Logging
+
+private let logger = Logger(label: "io.middleware.CrashReportingInstrumentation")
 
 private var ogCrashReporter: PLCrashReporter?
 private var customDataDictionary: [String: String] = [String: String]()
@@ -29,16 +32,16 @@ func installCrashReportingInstrumentation() {
     let crashReporter = PLCrashReporter(configuration: configuration)
     
     if crashReporter == nil {
-        print("MiddlewareRum: Failed to initialize crash reporting instrumentation.")
+        logger.error("MiddlewareRum: Failed to initialize crash reporting instrumentation.")
         return
     }
     
     guard let _ = crashReporter?.enable() else {
-        print("MiddlewareRum: Failed to enable crash reporting instrumentation.")
+        logger.error("MiddlewareRum: Failed to enable crash reporting instrumentation.")
         return
     }
     ogCrashReporter = crashReporter
-    print("MiddlewareRum: Enabled crash reporting instrumentation.")
+    logger.info("MiddlewareRum: Enabled crash reporting instrumentation.")
     setSessionId()
     setDeviceStats()
     startPollingForDeviceStats()
@@ -65,7 +68,7 @@ private func setSessionId() {
         let customData = try NSKeyedArchiver.archivedData(withRootObject: customDataDictionary, requiringSecureCoding: false)
         ogCrashReporter?.customData = customData
     } catch {
-        print("MiddlewareRum: Failed to add sessionId to crash report.")
+        logger.error("MiddlewareRum: Failed to add sessionId to crash report.")
     }
     
 }
@@ -93,7 +96,7 @@ private func setPendingCrashReport() {
 
 
 private func sendingCrashReport(_ data: Data!) throws {
-    print("MiddlewareRum: Loading crash report size \(data?.count as Any)")
+    logger.info("MiddlewareRum: Loading crash report size \(data?.count as Any)")
     
     let report = try PLCrashReport(data: data)
     var exceptionType = report.signalInfo.name
