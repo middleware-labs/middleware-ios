@@ -8,6 +8,7 @@ import MiddlewareRum
 struct WebView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> some UIView {
+        MiddlewareRum.setScreenName("WebView")
         let webView = WKWebView()
         let request = URLRequest(url:  URL(string: "https://middleware.io")!)
         MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
