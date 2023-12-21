@@ -106,7 +106,7 @@ private func sendingCrashReport(_ data: Data!) throws {
     }
     
     let now = Date()
-    let span = tracer.spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).setNoParent().startSpan()
+    let span = tracer.spanBuilder(spanName: "exception").setStartTime(time: now).startSpan()
     span.setAttribute(key: Constants.Attributes.COMPONENT, value: "crash")
     span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
     if(report.customData != nil ) {
@@ -122,18 +122,24 @@ private func sendingCrashReport(_ data: Data!) throws {
     }
     span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
     span.setAttribute(key: "error", value: true)
-    span.addEvent(name: "crash.timestamp", timestamp: report.systemInfo.timestamp)
+    var exceptionAttributes = [String: AttributeValue]()
+    
     span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: Device.current.description)
-    span.setAttribute(key: "exception.type", value: exceptionType ?? "unknown")
+    exceptionAttributes["exception.type"] = AttributeValue(exceptionType ?? "unknown")
     span.setAttribute(key: "crash.address", value: report.signalInfo.address.description)
     for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
-        span.setAttribute(key: "exception.stacktrace", value: crashedThreadToStack(report: report, thread: thread))
+        exceptionAttributes["exception.stacktrace"] = AttributeValue(crashedThreadToStack(report: report, thread: thread))
         break
     }
     if report.hasExceptionInfo {
-        span.setAttribute(key: "exception.type", value: report.exceptionInfo.exceptionName)
-        span.setAttribute(key: "exception.message", value: report.exceptionInfo.exceptionReason)
+        if(report.exceptionInfo.exceptionName != nil) {
+            exceptionAttributes["exception.type"] = AttributeValue(report.exceptionInfo.exceptionName as Any)
+        }
+        if(report.exceptionInfo.exceptionReason != nil) {
+            exceptionAttributes["exception.message"] = AttributeValue(report.exceptionInfo.exceptionReason as Any)
+        }
     }
+    span.addEvent(name: "crash.timestamp", attributes: exceptionAttributes, timestamp: report.systemInfo.timestamp)
     span.end(time: now)
 }
 
