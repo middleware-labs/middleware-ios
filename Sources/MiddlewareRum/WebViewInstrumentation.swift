@@ -3,7 +3,7 @@
 import Foundation
 import WebKit
 
-class WebKitInstrumentation {
+class WebViewInstrumentation {
     let view: WKWebView
     var sessionId: String
     init(view: WKWebView) {

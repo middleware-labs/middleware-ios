@@ -11,13 +11,15 @@ import NetworkStatus
 import SignPostIntegration
 import ResourceExtension
 import WebKit
-
+import Logging
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
 public class MiddlewareRum: NSObject {
+    
+    static let logger: Logging.Logger = Logging.Logger(label: "MiddlewareLogger")
     
     internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
@@ -60,8 +62,8 @@ public class MiddlewareRum: NSObject {
             .builder()
             .registerMetricReader(reader:
                                     StablePeriodicMetricReaderBuilder(exporter: otlpMetricExporter)
-                                        .setInterval(timeInterval: 5)
-                                        .build()
+                .setInterval(timeInterval: 5)
+                .build()
                                  )
                 .build()
         )
@@ -82,17 +84,19 @@ public class MiddlewareRum: NSObject {
         )
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
-            .with(resource: createMiddlewareResource(builder: builder))
             .with(processors: [SimpleLogRecordProcessor(logRecordExporter: otlpLogExporter)])
             .build())
+        
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
+        
+        AppStart(spanStart: middlewareRumInitTime).sendAppStartSpan()
         let mwInit = tracer
             .spanBuilder(spanName: "Middleware.initialize")
             .setStartTime(time: middlewareRumInitTime)
             .startSpan()
-        
+        mwInit.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
         setGlobalAttributes(builder.globalAttributes!)
         if(builder.deploymentEnvironment != nil) {
             setGlobalAttributes(["environment": builder.deploymentEnvironment!])
@@ -109,11 +113,13 @@ public class MiddlewareRum: NSObject {
         initializeNetworkTypeMonitoring()
         
         if(builder.isAppLifecycleInstrumentationEnabled()) {
-            _ = AppLifecycleInstrumentation()
+            let appLifeCycle = AppLifecycleInstrumentation()
+            appLifeCycle.registerLifecycleEvents()
         }
         
         if(builder.isCrashReportingEnabled()) {
-            installCrashReportingInstrumentation()
+            let crashReporting = CrashReportingInstrumentation()
+            crashReporting.start()
         }
         
         mwInit.end()
@@ -307,7 +313,75 @@ public class MiddlewareRum: NSObject {
     }
     
     public class func integrateWebViewWithBrowserRum(view: WKWebView) {
-        let webkit = WebKitInstrumentation(view: view)
+        let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
+    }
+    
+    /// Send trace log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional dditional information with log
+    public class func trace(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.trace(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .trace, metadata: metadata ?? [:])
+    }
+    
+    /// Send info log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional additional information with log
+    public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.info(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .info, metadata: metadata ?? [:])
+    }
+    
+    /// Send error log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional additional information with log
+    public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.error(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .error, metadata: metadata ?? [:])
+    }
+    
+    /// Send info log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional additional information with log
+    public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.debug(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .debug, metadata: metadata ?? [:])
+    }
+    
+    /// Send warning log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional additional information with log
+    public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.warning(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .warn, metadata: metadata ?? [:])
+    }
+    
+    /// Send critical log message.
+    /// - Parameters:
+    ///   - message: message that you like to log
+    ///   - metadata: optional additional information with log
+    public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+        logger.critical(message, metadata: metadata ?? [:])
+        MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
+    }
+    
+    private class func log(message: Logging.Logger.Message, severity: Severity, metadata: [String: Logging.Logger.MetadataValue]) {
+        var attribute: [String: AttributeValue] = [:]
+        for (name, value) in metadata {
+            attribute[name] = AttributeValue(value.description)
+        }
+        OpenTelemetry.instance.loggerProvider
+            .get(instrumentationScopeName: Constants.Global.INSTRUMENTATION_NAME)
+            .logRecordBuilder()
+            .setSeverity(severity)
+            .setBody(message.description)
+            .setAttributes(attribute)
+            .emit()
     }
 }

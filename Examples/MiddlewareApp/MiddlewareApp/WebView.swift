@@ -10,15 +10,14 @@ struct WebView: UIViewRepresentable {
     func makeUIView(context: Context) -> some UIView {
         let webView = WKWebView()
         let request = URLRequest(url:  URL(string: "https://middleware.io")!)
+        MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
         webView.load(request)
+        MiddlewareRum.info("Loaded WebView")
         return webView
     }
     
     func updateUIView(_ uiView: UIViewType, context: Context) {
-        
     }
-    
-    
 }
 
 #Preview {

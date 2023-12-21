@@ -27,10 +27,9 @@ class AppLifecycleInstrumentation {
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
         sessionIdInactivityExpiration = Date().addingTimeInterval(TimeInterval(INACTIVITY_SESSION_TIMEOUT_SECONDS))
-        registerLifecycleEvents()
     }
     
-    private func registerLifecycleEvents() {
+    func registerLifecycleEvents() {
         for event in events {
             _ = NotificationCenter.default.addObserver(forName: NSNotification.Name(event), object: nil, queue: nil) { (_) in
                 self.lifecycleEvent(event: event)

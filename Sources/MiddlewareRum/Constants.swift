@@ -47,6 +47,9 @@ enum Constants {
         static let NET_HOST_CARRIER_MNC = "net.host.carrier.mnc"
         static let NET_HOST_CARRIER_ICC = "net.host.carrier.icc"
     }
+    enum Events {
+        static let PROCESS_START = "process.start"
+    }
     enum Spans {
         static let SESSION_ID_CHANGE = "session.id.change"
         static let RESIGNACTIVE = "ResignActive"

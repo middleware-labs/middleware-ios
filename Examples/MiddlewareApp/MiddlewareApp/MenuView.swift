@@ -84,6 +84,7 @@ struct MenuView: View {
 }
 
 func makeHttpCall() {
+    MiddlewareRum.info("Started HTTP CALL")
     let session = URLSession(configuration: .default)
     guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
     var request = URLRequest(url: url)
@@ -97,10 +98,14 @@ func makeHttpCall() {
         }
     }
     task.resume()
+    MiddlewareRum.info("Ended HTTP CALL")
 }
 
 func customEvent() {
+    MiddlewareRum.info("Sending Custom Event")
     MiddlewareRum.addEvent(name: "I am custom event", attributes: ["customerId": "12345"])
+    MiddlewareRum.info("Done Custom Event")
+    
 }
 
 enum MyError: Error {
