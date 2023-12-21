@@ -57,7 +57,7 @@ public class MiddlewareRum: NSObject {
                                                     metricExporter: otlpMetricExporter,
                                                     metricPushInterval: 10000,
                                                     resource: createMiddlewareResource(builder: builder)))
-        
+        OpenTelemetry.instance.meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING).createIntCounter(name: "user.status").add(value: 1, labels: ["description" : "User Status ", "unit": "", "valueType": "1"])
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
