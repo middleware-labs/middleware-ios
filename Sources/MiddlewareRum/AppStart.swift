@@ -112,6 +112,7 @@ class AppStart {
         let tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
         appStart = tracer.spanBuilder(spanName: Constants.Spans.APP_START).setStartTime(time: spanStart).startSpan()
         appStart!.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
+        appStart!.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
         if let procStart = procStart {
             appStart!.addEvent(name: Constants.Events.PROCESS_START, timestamp: procStart)
         }

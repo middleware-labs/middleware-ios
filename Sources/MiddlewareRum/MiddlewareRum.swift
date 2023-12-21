@@ -94,6 +94,7 @@ public class MiddlewareRum: NSObject {
             .setStartTime(time: middlewareRumInitTime)
             .startSpan()
         mwInit.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
+        mwInit.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
         setGlobalAttributes(builder.globalAttributes!)
         if(builder.deploymentEnvironment != nil) {
             setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
@@ -189,7 +190,13 @@ public class MiddlewareRum: NSObject {
                     }
                 }
                 return true
-            }))
+            },
+            spanCustomization: { URLRequest, spanBuilder in
+                spanBuilder.setAttribute(key: Constants.Attributes.COMPONENT, value: "http")
+                spanBuilder.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "fetch")
+            }
+        )
+        )
     }
     
     class func initializeNetworkTypeMonitoring() {
