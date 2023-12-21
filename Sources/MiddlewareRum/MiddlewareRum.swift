@@ -10,6 +10,7 @@ import URLSessionInstrumentation
 import NetworkStatus
 import SignPostIntegration
 import ResourceExtension
+import WebKit
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
@@ -290,5 +291,10 @@ public class MiddlewareRum: NSObject {
         span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: "String")
         span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
+    }
+    
+    public class func integrateWebViewWithBrowserRum(view: WKWebView) {
+        let webkit = WebKitInstrumentation(view: view)
+        webkit.enable()
     }
 }
