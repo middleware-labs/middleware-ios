@@ -24,9 +24,6 @@ public class MiddlewareRum: NSObject {
     internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
         
-        var resource = Resource.init()
-        resource.merge(other: createMiddlewareResource(builder: builder))
-        
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
@@ -39,7 +36,7 @@ public class MiddlewareRum: NSObject {
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
-            .with(resource: resource)
+            .with(resource: createMiddlewareResource(builder: builder))
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
                 SignPostIntegration(),
@@ -61,7 +58,7 @@ public class MiddlewareRum: NSObject {
         
         OpenTelemetry.registerMeterProvider(meterProvider: MeterProviderBuilder()
             .with(exporter: otlpMetricExporter)
-            .with(resource: resource)
+            .with(resource: createMiddlewareResource(builder: builder))
             .with(processor: MetricProcessorSdk())
             .with(pushInterval: 60)
             .build())
@@ -82,6 +79,7 @@ public class MiddlewareRum: NSObject {
         )
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
+            .with(resource: createMiddlewareResource(builder: builder))
             .with(processors: [SimpleLogRecordProcessor(logRecordExporter: otlpLogExporter)])
             .build())
         
