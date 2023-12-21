@@ -201,6 +201,10 @@ public class MiddlewareRum: NSObject {
         
     }
     
+    /// Send custom span to trace
+    /// - Parameters:
+    ///   - name: Sets the name of the span
+    ///   - attributes: Attach attributes to span
     public class func addEvent(name: String, attributes: NSDictionary) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
@@ -214,13 +218,22 @@ public class MiddlewareRum: NSObject {
     }
     
     
-    /**
-     * Get the Middleware Session ID associated with this instance of the RUM instrumentation library.
-     * Note: this value can change throughout the lifetime of an application instance, so it is
-     * recommended that you do not cache this value, but always retrieve it from here when needed.
-     */
+    
+    /// Get the Middleware Session ID associated with this instance of the RUM instrumentation library.
+    /// Note: this value can change throughout the lifetime of an application instance, so it is recommended that you do not cache this value, but always retrieve it from here when needed.
+    /// - Returns: the session id String
     public class func getSessionId() -> String {
         return getRumSessionId()
+    }
+    
+    /// Add screen name to view. Note this only sets screen name from main thread.
+    /// - Parameter name: <#name description#>
+    public class func setScreenName(_ name: String) {
+        if !Thread.current.isMainThread {
+            logger.info("MiddlewareRum.setScreenName is not called from main thread: \(Thread.current.debugDescription)")
+            return
+        }
+        ScreenName().setScreenName(name, true)
     }
     
     public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
@@ -231,15 +244,10 @@ public class MiddlewareRum: NSObject {
         return OpenTelemetry.instance
     }
     
-    /**
-     * Add a custom exception to RUM monitoring. This can be useful for tracking custom error
-     * handling in your application.
-     *
-     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
-     * auto-generated spans.
-     *
-     * @param {NSException} associated with this event.
-     */
+    
+    /// Add a custom exception to RUM monitoring. This can be useful for tracking custom error handling in your application.
+    /// NOTE : This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
+    /// - Parameter e: NSException associated with this event.
     public class func addException(e: NSException) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
@@ -262,15 +270,10 @@ public class MiddlewareRum: NSObject {
         span.end(time: now)
     }
     
-    /**
-     * Add a custom errors to RUM monitoring. This can be useful for tracking custom error
-     * handling in your application.
-     *
-     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
-     * auto-generated spans.
-     *
-     * @param {Error} associated with this event.
-     */
+    
+    /// Add a custom errors to RUM monitoring. This can be useful for tracking custom error handling in your application.
+    /// NOTE: This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
+    /// - Parameter e: Error associated with this event.
     public class func addError(e: Error) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
@@ -286,15 +289,10 @@ public class MiddlewareRum: NSObject {
         span.end(time: now)
     }
     
-    /**
-     * Add a custom error to RUM monitoring. This can be useful for tracking custom error
-     * handling in your application.
-     *
-     * <p>This event will be turned into a Span and sent to the RUM ingest along with other,
-     * auto-generated spans.
-     *
-     * @param {String} associated with this event.
-     */
+    
+    /// Add a custom error to RUM monitoring. This can be useful for tracking custom error handling in your application.
+    /// NOTE: This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
+    /// - Parameter e: String associated with this event.
     public class func addError(e: String) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
