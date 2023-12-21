@@ -39,6 +39,7 @@ public class MiddlewareRum: NSObject {
         
         OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
+            .with(resource: resource)
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
                 SignPostIntegration(),
@@ -48,7 +49,7 @@ public class MiddlewareRum: NSObject {
         )
         
         
-        let otlpMetricExporter = StableOtlpHTTPMetricExporter(
+        let otlpMetricExporter = OtlpHttpMetricExporter(
             endpoint: URL(string: builder.target! + "/v1/metrics")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
                                       headers: [
@@ -58,20 +59,17 @@ public class MiddlewareRum: NSObject {
                                      )
         )
         
-        OpenTelemetry.registerStableMeterProvider(meterProvider: StableMeterProviderSdk
-            .builder()
-            .registerMetricReader(reader:
-                                    StablePeriodicMetricReaderBuilder(exporter: otlpMetricExporter)
-                .setInterval(timeInterval: 5)
-                .build()
-                                 )
-                .build()
-        )
+        OpenTelemetry.registerMeterProvider(meterProvider: MeterProviderBuilder()
+            .with(exporter: otlpMetricExporter)
+            .with(resource: resource)
+            .with(processor: MetricProcessorSdk())
+            .with(pushInterval: 60)
+            .build())
         
-        var userCounter = OpenTelemetry.instance.stableMeterProvider?.get(name: Constants.Global.INSTRUMENTATION_NAME)
-            .counterBuilder(name: "user.status")
-            .build()
-        userCounter?.add(value: 1, attribute: resource.attributes)
+        OpenTelemetry.instance
+            .meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
+            .createIntCounter(name: "user-status")
+            .add(value: 1, labels: ["description" : "User Status", "valueType": "1", "unit": ""])
         
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
