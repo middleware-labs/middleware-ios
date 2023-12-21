@@ -51,13 +51,23 @@ public class MiddlewareRum: NSObject {
                                       ]
                                      )
         )
-        OpenTelemetry.registerMeterProvider(meterProvider:
-                                                MeterProviderSdk(
-                                                    metricProcessor: MetricProcessorSdk(),
-                                                    metricExporter: otlpMetricExporter,
-                                                    metricPushInterval: 10000,
-                                                    resource: createMiddlewareResource(builder: builder)))
-        OpenTelemetry.instance.meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING).createIntCounter(name: "user.status").add(value: 1, labels: ["description" : "User Status ", "unit": "", "valueType": "1"])
+        
+        
+        let meterProviderSdk = MeterProviderSdk(
+            metricProcessor: MetricProcessorSdk(),
+            metricExporter: otlpMetricExporter,
+            metricPushInterval: 10000,
+            resource: createMiddlewareResource(builder: builder))
+        OpenTelemetry.registerStableMeterProvider(meterProvider: meterProviderSdk as! StableMeterProvider)
+        
+        var userStatusMeter = OpenTelemetry.instance.stableMeterProvider?.get( name: Constants.Global.INSTRUMENTATION_NAME)
+            .counterBuilder(name: "user.status")
+            .build()
+        var resource = createMiddlewareResource(builder: builder)
+        resource.merge(other: Resource(attributes: ["session.id" : AttributeValue(getRumSessionId())]))
+        userStatusMeter?.add(value: 1, attribute: resource.attributes)
+            
+            
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
