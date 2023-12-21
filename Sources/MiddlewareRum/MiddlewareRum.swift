@@ -12,6 +12,7 @@ import SignPostIntegration
 import ResourceExtension
 import WebKit
 import Logging
+import DeviceKit
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
@@ -95,7 +96,7 @@ public class MiddlewareRum: NSObject {
         mwInit.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
         setGlobalAttributes(builder.globalAttributes!)
         if(builder.deploymentEnvironment != nil) {
-            setGlobalAttributes(["environment": builder.deploymentEnvironment!])
+            setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
         }
         
         if(builder.isNetworkMonitoringEnabled()) {
@@ -165,9 +166,10 @@ public class MiddlewareRum: NSObject {
         var defaultResource = DefaultResources().get()
         defaultResource.merge(other: Resource(attributes: [
             "mw.account_key" :AttributeValue(builder.rumAccessToken!),
-            "service.name" : AttributeValue(builder.serviceName!),
+            ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
             "browser.trace" : AttributeValue(true),
-            "browser.mobile" : AttributeValue(true),
+            ResourceAttributes.browserMobile.rawValue : AttributeValue(true),
+            ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.description),
             "project.name":AttributeValue(builder.projectName!)
         ]))
         return defaultResource
