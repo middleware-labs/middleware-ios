@@ -56,17 +56,13 @@ public class MiddlewareRum: NSObject {
         let meterProviderSdk = MeterProviderSdk(
             metricProcessor: MetricProcessorSdk(),
             metricExporter: otlpMetricExporter,
-            metricPushInterval: 10000,
+            metricPushInterval: 5000,
             resource: createMiddlewareResource(builder: builder))
-        OpenTelemetry.registerStableMeterProvider(meterProvider: meterProviderSdk as! StableMeterProvider)
+        OpenTelemetry.registerMeterProvider(meterProvider: meterProviderSdk)
         
-        var userStatusMeter = OpenTelemetry.instance.stableMeterProvider?.get( name: Constants.Global.INSTRUMENTATION_NAME)
-            .counterBuilder(name: "user.status")
-            .build()
-        var resource = createMiddlewareResource(builder: builder)
-        resource.merge(other: Resource(attributes: ["session.id" : AttributeValue(getRumSessionId())]))
-        userStatusMeter?.add(value: 1, attribute: resource.attributes)
-            
+        OpenTelemetry.instance.meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
+            .createIntCounter(name: "user.status", monotonic: true)
+            .add(value: Int(1), labels: ["session.id" : getRumSessionId()])
             
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
