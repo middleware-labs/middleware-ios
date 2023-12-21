@@ -27,7 +27,7 @@ func reportCrash(e: NSException) {
 }
 
 func installCrashReportingInstrumentation() {
-    let configuration = PLCrashReporterConfig(signalHandlerType: .mach, symbolicationStrategy: .all)
+    let configuration = PLCrashReporterConfig(signalHandlerType: .BSD, symbolicationStrategy: PLCrashReporterSymbolicationStrategy(rawValue: 0))
     
     let crashReporter = PLCrashReporter(configuration: configuration)
     
