@@ -27,7 +27,7 @@ func reportCrash(e: NSException) {
 }
 
 func installCrashReportingInstrumentation() {
-    let configuration = PLCrashReporterConfig(signalHandlerType: .BSD, symbolicationStrategy: PLCrashReporterSymbolicationStrategy(rawValue: 0))
+    let configuration = PLCrashReporterConfig(signalHandlerType: .mach, symbolicationStrategy: .all)
     
     let crashReporter = PLCrashReporter(configuration: configuration)
     
@@ -45,7 +45,7 @@ func installCrashReportingInstrumentation() {
     setSessionId()
     setDeviceStats()
     startPollingForDeviceStats()
-    if(crashReporter!.hasPendingCrashReport()) {
+    if(!crashReporter!.hasPendingCrashReport()) {
         return
     }
     setPendingCrashReport()
