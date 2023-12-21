@@ -96,7 +96,7 @@ class CrashReportingInstrumentation {
         }
         
         let now = Date()
-        let span = tracer.spanBuilder(spanName: "exception").setStartTime(time: now).startSpan()
+        let span = tracer.spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
         span.setAttribute(key: Constants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
         if(report.customData != nil ) {
