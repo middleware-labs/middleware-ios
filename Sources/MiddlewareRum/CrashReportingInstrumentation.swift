@@ -5,6 +5,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 import CrashReporter
 import Logging
+import DeviceKit
 
 private let logger = Logger(label: "io.middleware.CrashReportingInstrumentation")
 
@@ -122,6 +123,7 @@ private func sendingCrashReport(_ data: Data!) throws {
     span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
     span.setAttribute(key: "error", value: true)
     span.addEvent(name: "crash.timestamp", timestamp: report.systemInfo.timestamp)
+    span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: Device.current.description)
     span.setAttribute(key: "exception.type", value: exceptionType ?? "unknown")
     span.setAttribute(key: "crash.address", value: report.signalInfo.address.description)
     for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
