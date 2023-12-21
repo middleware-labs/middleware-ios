@@ -7,48 +7,46 @@ fileprivate var screenNameManuallySet = false
 fileprivate var lock = NSLock()
 fileprivate var screenNameCallbacks: [((String) -> Void)] = []
 
-class ScreenName {
+// This method should be only called from main thread.
+func setScreenNameInternal(_ newName: String, _ manual: Bool) {
+    var callbacks: [((String) -> Void)] = []
+    lock.lock()
     
-    // This method should be only called from main thread.
-    func setScreenName(_ newName: String, _ manual: Bool) {
-        var callbacks: [((String) -> Void)] = []
-        lock.lock()
-        
-        if manual {
-            screenNameManuallySet = true
-        }
-    
-        if manual || !screenNameManuallySet {
-            screenName = newName
-        }
-        callbacks = screenNameCallbacks
-        lock.unlock()
-        
-        for callback in callbacks {
-            callback(screenName)
-        }
+    if manual {
+        screenNameManuallySet = true
     }
     
-    func isScreenNameManuallySet() -> Bool {
-        lock.lock()
-        defer {
-            lock.unlock()
-        }
-        return screenNameManuallySet
+    if manual || !screenNameManuallySet {
+        screenName = newName
     }
-    func getScreenName() -> String {
-        lock.lock()
-        defer {
-            lock.unlock()
-        }
-        return screenName
-    }
+    callbacks = screenNameCallbacks
+    lock.unlock()
     
-    func addScreenNameCallback(_ callback: @escaping ((String) -> Void)) {
-        lock.lock()
-        defer {
-            lock.unlock()
-        }
-        screenNameCallbacks.append(callback)
+    for callback in callbacks {
+        callback(screenName)
     }
 }
+
+func isScreenNameManuallySet() -> Bool {
+    lock.lock()
+    defer {
+        lock.unlock()
+    }
+    return screenNameManuallySet
+}
+func getScreenName() -> String {
+    lock.lock()
+    defer {
+        lock.unlock()
+    }
+    return screenName
+}
+
+func addScreenNameCallback(_ callback: @escaping ((String) -> Void)) {
+    lock.lock()
+    defer {
+        lock.unlock()
+    }
+    screenNameCallbacks.append(callback)
+}
+

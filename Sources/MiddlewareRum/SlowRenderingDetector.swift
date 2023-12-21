@@ -5,20 +5,6 @@ import UIKit
 import OpenTelemetrySdk
 import OpenTelemetryApi
 
-extension UIViewController {
-    static func visibleViewController(from viewController: UIViewController? = UIApplication.shared.keyWindow?.rootViewController) -> UIViewController? {
-        if let navigationController = viewController as? UINavigationController {
-            return visibleViewController(from: navigationController.visibleViewController)
-        } else if let tabBarController = viewController as? UITabBarController {
-            return visibleViewController(from: tabBarController.selectedViewController)
-        } else if let presentedViewController = viewController?.presentedViewController {
-            return visibleViewController(from: presentedViewController)
-        } else {
-            return viewController
-        }
-    }
-}
-
 class SlowRenderingDetector {
     
     private var displayLink: CADisplayLink?
@@ -35,7 +21,7 @@ class SlowRenderingDetector {
     
     public init(configuration: SlowRenderingConfiguration) {
         self.tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: "io.opentelemetry.slow-rendering", instrumentationVersion: "0.0.1")
-        self.activityName = SlowRenderingDetector.getActivityName()
+        self.activityName = getScreenName()
         self.configuration = configuration
         start()
     }
@@ -105,15 +91,6 @@ class SlowRenderingDetector {
         }
         self.slowFrames.removeAll()
         self.frozenFrames.removeAll()
-    }
-    
-    class func getActivityName() -> String {
-        if let currentViewController = UIViewController.visibleViewController() {
-            let name = NSStringFromClass(type(of: currentViewController))
-            return name
-        } 
-        return "unknown"
-        
     }
     
     func reportFrame(_ type: String, _ activityName: String, _ count: Int) {

@@ -233,7 +233,7 @@ public class MiddlewareRum: NSObject {
             logger.info("MiddlewareRum.setScreenName is not called from main thread: \(Thread.current.debugDescription)")
             return
         }
-        ScreenName().setScreenName(name, true)
+        setScreenNameInternal(name, true)
     }
     
     public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
