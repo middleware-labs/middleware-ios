@@ -8,12 +8,8 @@ import Logging
 import DeviceKit
 
 private let logger = Logger(label: "io.middleware.CrashReportingInstrumentation")
-
 private var ogCrashReporter: PLCrashReporter?
 private var customDataDictionary: [String: String] = [String: String]()
-private var tracer = OpenTelemetry.instance.tracerProvider.get(
-    instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-    instrumentationVersion: Constants.Global.VERSION_STRING)
 
 class CrashReportingInstrumentation {
     
@@ -96,7 +92,7 @@ class CrashReportingInstrumentation {
         }
         
         let now = Date()
-        let span = tracer.spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
+        let span = tracer().spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
         span.setAttribute(key: Constants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
         if(report.customData != nil ) {

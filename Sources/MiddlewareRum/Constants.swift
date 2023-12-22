@@ -58,6 +58,7 @@ enum Constants {
         static let PRESENTATION_TRANSITION = "PresentationTransition"
         static let APP_START = "AppStart"
         static let APP_TERMINATING = "AppTerminating"
+        static let SHOW_VC = "ShowVC"
     }
     
     enum LifeCycleEvents {
