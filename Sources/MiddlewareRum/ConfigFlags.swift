@@ -8,6 +8,7 @@ class ConfigFlags {
     var slowRenderingDetectionEnabled: Bool = true
     var appLifecycleInstumentationEnabled: Bool = true
     var crashReportingEnabled: Bool = true
+    var uiInstrumentationEnabled: Bool = true
     
     init () {}
     
@@ -31,6 +32,10 @@ class ConfigFlags {
         self.crashReportingEnabled = false
     }
     
+    func disableUiInsrumentation() {
+        self.uiInstrumentationEnabled = false
+    }
+    
     func isSlowRenderingEnabled()  -> Bool {
         return slowRenderingDetectionEnabled
     }
@@ -45,5 +50,8 @@ class ConfigFlags {
     
     func isCrashReportingEnabled() -> Bool {
         return crashReportingEnabled
+    }
+    func isUiInsrumentationEnabled() -> Bool {
+        return uiInstrumentationEnabled
     }
 }

@@ -95,6 +95,10 @@ public class MiddlewareRumBuilder: NSObject {
         return configFlags.isAppLifecycleInstrumentationEnabled()
     }
     
+    public func isUiInstrumentationEnabled() -> Bool {
+        return configFlags.isUiInsrumentationEnabled()
+    }
+    
     public func isCrashReportingEnabled() -> Bool {
         return configFlags.isCrashReportingEnabled()
     }

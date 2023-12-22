@@ -120,6 +120,11 @@ public class MiddlewareRum: NSObject {
             crashReporting.start()
         }
         
+        if(builder.isUiInstrumentationEnabled()) {
+            let uiInstrumentation = UIInstrumentation()
+            uiInstrumentation.start()
+        }
+        
         mwInit.end()
         
         return true

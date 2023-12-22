@@ -219,14 +219,16 @@ func initializeShowVCInstrumentation() {
     ShowVCInstrumenter.start()
 }
 
-func initalizeUIInstrumentation() {
-    initializePresentationTransitionInstrumentation()
-    
-    initializeShowVCInstrumentation()
-    
-    abracadabra(clazz: UIApplication.self, orig: #selector(UIApplication.sendAction(_:to:from:for:)), swoosh: #selector(UIApplication.abracadabra_sendAction(_:to:from:for:)))
-    abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidLoad), swoosh: #selector(UIViewController.abracadabra_viewDidLoad))
-    abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidAppear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidAppear(_:)))
-    abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidDisappear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidDisappear(_:)))
-    
+class UIInstrumentation {
+    func start() {
+        initializePresentationTransitionInstrumentation()
+        
+        initializeShowVCInstrumentation()
+        
+        abracadabra(clazz: UIApplication.self, orig: #selector(UIApplication.sendAction(_:to:from:for:)), swoosh: #selector(UIApplication.abracadabra_sendAction(_:to:from:for:)))
+        abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidLoad), swoosh: #selector(UIViewController.abracadabra_viewDidLoad))
+        abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidAppear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidAppear(_:)))
+        abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidDisappear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidDisappear(_:)))
+        
+    }
 }
