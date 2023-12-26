@@ -146,47 +146,6 @@ private func setUIFields() {
     }
 }
 
-class NotificationPairInstrumener {
-    let obj2Span = NSMapTable<NSObject, SpanHolder>(keyOptions: NSPointerFunctions.Options.weakMemory, valueOptions: NSPointerFunctions.Options.strongMemory)
-    let begin: String
-    let end: String
-    let spanName: String
-    init(begin: String, end: String, spanName: String) {
-        self.begin = begin
-        self.end = end
-        self.spanName = spanName
-    }
-    func start() {
-        let beginName = Notification.Name(rawValue: begin)
-        let endName = Notification.Name(rawValue: end)
-        
-        _ = NotificationCenter.default.addObserver(forName: beginName, object: nil, queue: nil) { (notif) in
-            let notifObj = notif.object as? NSObject
-            if notifObj != nil {
-                let span = tracer().spanBuilder(spanName: self.spanName).startSpan()
-                span.setAttribute(key: Constants.Attributes.LAST_SCREEN_NAME, value: getScreenName())
-                span.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
-                span.setAttribute(key: Constants.Attributes.OBJECT_TYPE, value: String(describing: type(of: notif.object!)))
-                self.obj2Span.setObject(SpanHolder(span), forKey: notifObj)
-            }
-            
-        }
-        _ = NotificationCenter.default.addObserver(forName: endName, object: nil, queue: nil) { (notif) in
-            setUIFields()
-            let notifObj = notif.object as? NSObject
-            if notifObj != nil {
-                let spanHolder = self.obj2Span.object(forKey: notifObj)
-                if spanHolder != nil {
-                    // screenName may have changed now that the view has appeared; update new screen name
-                    spanHolder?.span.setAttribute(key: Constants.Attributes.SCREEN_NAME, value: getScreenName())
-                    spanHolder?.span.end()
-                }
-            }
-        }
-        
-    }
-}
-
 func abracadabra(clazz: AnyClass, orig: Selector, swoosh: Selector) {
     let origM = class_getInstanceMethod(clazz, orig)
     let swizM = class_getInstanceMethod(clazz, swoosh)
@@ -197,7 +156,7 @@ func abracadabra(clazz: AnyClass, orig: Selector, swoosh: Selector) {
     }
 }
 
-let PresentationTransitionInstrumenter = NotificationPairInstrumener(
+let PresentationTransitionInstrumenter = NotificationPairInstrumenter(
     begin: "UIPresentationControllerPresentationTransitionWillBeginNotification",
     end: "UIPresentationControllerPresentationTransitionDidEndNotification",
     spanName: Constants.Spans.PRESENTATION_TRANSITION)
@@ -210,7 +169,7 @@ func initializePresentationTransitionInstrumentation() {
 }
 
 
-let ShowVCInstrumenter = NotificationPairInstrumener(
+let ShowVCInstrumenter = NotificationPairInstrumenter(
     begin: "UINavigationControllerWillShowViewControllerNotification",
     end: "UINavigationControllerDidShowViewControllerNotification",
     spanName: Constants.Spans.SHOW_VC)
