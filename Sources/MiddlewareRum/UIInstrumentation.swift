@@ -12,7 +12,7 @@ extension UIApplication {
                                            for event: UIEvent?) -> Bool {
         setUIFields()
         let uiSpan = tracer()
-            .spanBuilder(spanName: Constants.Spans.ACTION).startSpan()
+            .spanBuilder(spanName: action.description).startSpan()
         uiSpan.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
         uiSpan.setAttribute(key: Constants.Attributes.ACTION_NAME, value: action.description)
         OpenTelemetry.instance.contextProvider.setActiveSpan(uiSpan)
