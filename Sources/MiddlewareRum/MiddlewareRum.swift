@@ -328,16 +328,14 @@ let globalAttributesLock = NSLock()
         span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
     }
-    
-    @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
+
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
+    @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
         let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
-#else
-        logger.info("MiddlewareRum: WebView Instrumentation is not supported in tvOS")
-#endif
     }
-    
+#endif
+
     /// Send trace log message.
     /// - Parameters:
     ///   - message: message that you like to log
