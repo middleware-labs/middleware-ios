@@ -3,7 +3,6 @@
 import Foundation
 import OpenTelemetrySdk
 import OpenTelemetryApi
-import DeviceKit
 
 class GlobalAttributesProcessor: SpanProcessor {
     var isStartRequired = true
@@ -24,7 +23,7 @@ class GlobalAttributesProcessor: SpanProcessor {
         let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
         let bundleShortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         appVersion = bundleShortVersion ?? bundleVersion
-        deviceModel = Device.current.description
+        deviceModel = Device.current.model
     }
     
     func onStart(parentContext: OpenTelemetryApi.SpanContext?, span: OpenTelemetrySdk.ReadableSpan) {

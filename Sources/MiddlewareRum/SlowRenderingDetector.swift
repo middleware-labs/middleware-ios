@@ -1,10 +1,13 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS)
 import Foundation
 import UIKit
+
 import OpenTelemetrySdk
 import OpenTelemetryApi
 
+@available(macOS 14.0, *)
 class SlowRenderingDetector {
     
     private var displayLink: CADisplayLink?
@@ -102,3 +105,4 @@ class SlowRenderingDetector {
         span.end(time: now)
     }
 }
+#endif

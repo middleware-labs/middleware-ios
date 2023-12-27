@@ -1,10 +1,10 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS)
 import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import UIKit
-
 extension UIApplication {
     @objc open func abracadabra_sendAction(_ action: Selector,
                                            to target: Any?,
@@ -191,3 +191,4 @@ class UIInstrumentation {
         
     }
 }
+#endif

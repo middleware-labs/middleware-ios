@@ -12,7 +12,6 @@ import SignPostIntegration
 import ResourceExtension
 import WebKit
 import Logging
-import DeviceKit
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
@@ -105,7 +104,11 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
+            #if os(iOS)
             _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
+            #elseif os(macOS)
+            logger.info("Slow rendering is supported only in iOS")
+            #endif
         }
         
         initializeNetworkTypeMonitoring()
@@ -121,8 +124,12 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isUiInstrumentationEnabled()) {
+            #if os(iOS)
             let uiInstrumentation = UIInstrumentation()
             uiInstrumentation.start()
+            #elseif os(macOS)
+            logger.info("UI instrumentation is supported only in iOS")
+            #endif
         }
         
         mwInit.end()
@@ -175,7 +182,7 @@ let globalAttributesLock = NSLock()
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
             "browser.trace" : AttributeValue(true),
             ResourceAttributes.browserMobile.rawValue : AttributeValue(true),
-            ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.description),
+            ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.model),
             "project.name":AttributeValue(builder.projectName!)
         ]))
         return defaultResource
@@ -206,7 +213,7 @@ let globalAttributesLock = NSLock()
     
     class func initializeNetworkTypeMonitoring() {
         do{
-            let _ = try NetworkStatus()
+            let _ = try NetworkMonitor()
         } catch {
             print("Middleware: Failed to initialize network type detection")
         }

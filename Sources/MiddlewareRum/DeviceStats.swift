@@ -2,12 +2,22 @@
 
 import Foundation
 import System
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
+
 
 internal class DeviceStats {
     class var batteryLevel: String {
+        var level = ""
+        #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
-        let level = abs(UIDevice.current.batteryLevel * 100)
+        level = abs(UIDevice.current.batteryLevel * 100)
+        #elseif os(macOS)
+        #endif
+
         return "\(level)%"
     }
     class var freeDiskSpace: String {

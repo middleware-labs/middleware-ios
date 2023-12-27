@@ -7,8 +7,7 @@ let package = Package(
     name: "middleware-ios",
     platforms: [
         .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13)
+        .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -19,7 +18,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.8.0"),
         .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
-        .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.3"),
     ],
     targets: [
@@ -37,7 +35,6 @@ let package = Package(
                 .product(name: "NetworkStatus", package: "opentelemetry-swift"),
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
-                .product(name: "DeviceKit", package: "DeviceKit"),
                 .product(name: "Logging", package: "swift-log")
             ],
             path: "Sources"
@@ -55,7 +52,6 @@ let package = Package(
                 .product(name: "NetworkStatus", package: "opentelemetry-swift"),
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
-                .product(name: "DeviceKit", package: "DeviceKit")
             ]),
     ]
 )
