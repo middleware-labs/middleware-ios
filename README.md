@@ -141,3 +141,39 @@ Methods that can be used for setting instrumentation & configure your applicatio
         </tr>
     </tbody>
 </table>
+
+### Logging using Middleware API
+
+```swift
+
+MiddlewareRum.info("Some information")
+MiddlewareRum.debug("Some information")
+MiddlewareRum.trace("Some information")
+MiddlewareRum.warning("Some information")
+MiddlewareRum.error("Some information")
+MiddlewareRum.critical("Some information")
+```
+
+### Adding custom error to trace
+
+```swift
+MiddlewareRum.addError("Unable to process I am error")
+```
+
+### Custom Exception
+
+```swift
+MiddlewareRum.addException(e: NSException(name: NSExceptionName(rawValue: "RuntimeException"), reason: "I am custom exception"))
+```
+
+### Set screen name
+
+```swift
+MiddlewareRum.setScreenName("WebView")
+```
+
+### WebView Instrumentation
+
+```swift
+MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
+```
