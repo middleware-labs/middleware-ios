@@ -2,7 +2,7 @@
 
 import Foundation
 import System
-#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+#if os(iOS) || targetEnvironment(macCatalyst)
 import UIKit
 #elseif os(macOS)
 import AppKit
@@ -13,7 +13,7 @@ import IOKit.ps
 internal class DeviceStats {
     class var batteryLevel: String {
         var level = Float(0)
-#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+#if os(iOS) || targetEnvironment(macCatalyst)
         UIDevice.current.isBatteryMonitoringEnabled = true
         level = abs(UIDevice.current.batteryLevel * 100)
 #elseif os(macOS)
