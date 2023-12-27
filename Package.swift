@@ -38,7 +38,7 @@ let package = Package(
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "DeviceKit", package: "DeviceKit")
+                .product(name: "DeviceKit", package: "DeviceKit", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst]))
             ],
             path: "Sources"
         ),

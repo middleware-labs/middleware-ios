@@ -3,7 +3,7 @@
 import Foundation
 import OpenTelemetrySdk
 import OpenTelemetryApi
-#if os(iOS) || targetEnvironment(macCatalyst)
+#if !os(macOS)
 import DeviceKit
 #endif
 
@@ -26,7 +26,7 @@ class GlobalAttributesProcessor: SpanProcessor {
         let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
         let bundleShortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         appVersion = bundleShortVersion ?? bundleVersion
-#if os(iOS) || targetEnvironment(macCatalyst)
+#if !os(macOS)
         deviceModel = DeviceKit.Device.current.description
 #else
         deviceModel = Device.current.model

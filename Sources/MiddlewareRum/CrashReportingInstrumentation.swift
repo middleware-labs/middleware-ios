@@ -5,7 +5,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 import CrashReporter
 import Logging
-#if os(iOS) || targetEnvironment(macCatalyst)
+#if !os(macOS)
 import DeviceKit
 #endif
 
@@ -111,7 +111,7 @@ class CrashReportingInstrumentation {
         span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
         span.setAttribute(key: "error", value: true)
         var exceptionAttributes = [String: AttributeValue]()
-#if os(iOS) || targetEnvironment(macCatalyst)
+#if !os(macOS)
         span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
 #else
         span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
