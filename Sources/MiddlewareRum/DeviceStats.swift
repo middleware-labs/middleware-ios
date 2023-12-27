@@ -13,7 +13,7 @@ import IOKit.ps
 internal class DeviceStats {
     class var batteryLevel: String {
         var level = Float(0)
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         level = abs(UIDevice.current.batteryLevel * 100)
 #elseif os(macOS)

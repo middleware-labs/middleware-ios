@@ -104,7 +104,7 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
 #elseif os(macOS)
             logger.info("Slow rendering is supported only in iOS")
@@ -124,7 +124,7 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isUiInstrumentationEnabled()) {
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             let uiInstrumentation = UIInstrumentation()
             uiInstrumentation.start()
 #elseif os(macOS)

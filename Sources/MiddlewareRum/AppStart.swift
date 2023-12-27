@@ -1,7 +1,7 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
 import Foundation
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 #elseif os(macOS)
 import AppKit
@@ -81,7 +81,7 @@ class AppStart {
                 appStart.end()
             }
         }
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
         didBecomeActiveNotificationToken = notifCenter.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main, using: didBecomeActiveClosure)
 #elseif os(macOS)
         didBecomeActiveNotificationToken = notifCenter.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main, using: didBecomeActiveClosure)
@@ -95,7 +95,7 @@ class AppStart {
             }
         }
         
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
         didFinishLaunchingNotificationToken = notifCenter.addObserver(forName: UIApplication.didFinishLaunchingNotification, object: nil, queue: .main, using: didFinishLaunchingClosure)
 #elseif os(macOS)
         didFinishLaunchingNotificationToken = notifCenter.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main, using: didFinishLaunchingClosure)
@@ -105,7 +105,7 @@ class AppStart {
         // willEnterForeground
         var willEnterForegroundNotificationToken: NSObjectProtocol?
         let willEnterForegroundClosure: (Notification) -> Void = { notification in
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             self.wasBackgroundedBeforeWillEnterForeground = UIApplication.shared.applicationState == .background
 #elseif os(macOS)
             self.wasBackgroundedBeforeWillEnterForeground = NSApplication.shared.isActive == false
@@ -116,7 +116,7 @@ class AppStart {
                 notifCenter.removeObserver(willEnterForegroundNotificationToken)
             }
         }
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
         willEnterForegroundNotificationToken = notifCenter.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main, using: willEnterForegroundClosure)
 #elseif os(macOS)
         willEnterForegroundNotificationToken = notifCenter.addObserver(forName: NSApplication.willBecomeActiveNotification, object: nil, queue: .main, using: willEnterForegroundClosure)
