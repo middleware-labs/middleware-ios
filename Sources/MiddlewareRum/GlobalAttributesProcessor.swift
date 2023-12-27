@@ -3,6 +3,9 @@
 import Foundation
 import OpenTelemetrySdk
 import OpenTelemetryApi
+#if os(iOS) || targetEnvironment(macCatalyst)
+import DeviceKit
+#endif
 
 class GlobalAttributesProcessor: SpanProcessor {
     var isStartRequired = true
@@ -23,7 +26,11 @@ class GlobalAttributesProcessor: SpanProcessor {
         let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
         let bundleShortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         appVersion = bundleShortVersion ?? bundleVersion
+#if os(iOS) || targetEnvironment(macCatalyst)
+        deviceModel = DeviceKit.Device.current.description
+#else
         deviceModel = Device.current.model
+#endif
     }
     
     func onStart(parentContext: OpenTelemetryApi.SpanContext?, span: OpenTelemetrySdk.ReadableSpan) {

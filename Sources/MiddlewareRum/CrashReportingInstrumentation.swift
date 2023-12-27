@@ -5,6 +5,9 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 import CrashReporter
 import Logging
+#if os(iOS) || targetEnvironment(macCatalyst)
+import DeviceKit
+#endif
 
 private let logger = Logger(label: "io.middleware.CrashReportingInstrumentation")
 private var ogCrashReporter: PLCrashReporter?
@@ -108,8 +111,12 @@ class CrashReportingInstrumentation {
         span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
         span.setAttribute(key: "error", value: true)
         var exceptionAttributes = [String: AttributeValue]()
-        
+#if os(iOS) || targetEnvironment(macCatalyst)
+        span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
+#else
         span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
+#endif
+        
         exceptionAttributes["exception.type"] = AttributeValue(exceptionType ?? "unknown")
         span.setAttribute(key: "crash.address", value: report.signalInfo.address.description)
         for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
