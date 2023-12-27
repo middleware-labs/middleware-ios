@@ -44,16 +44,3 @@ jobs:
       run: make build-for-testing-tvos
     - name: Test for tvOS
       run: make test-without-building-tvos
-  watchOS:
-    runs-on: macOS-13
-    steps:
-    - uses: actions/checkout@v2
-    - uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 15.1
-    - name: Install Homebrew kegs
-      run: make setup-brew
-    - name: Build for watchOS
-      run: make build-for-testing-watchos
-    - name: Test for watchOS
-      run: make test-without-building-watchos
