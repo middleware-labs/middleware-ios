@@ -2,7 +2,7 @@
 
 import Foundation
 
-public class MiddlewareRumBuilder: NSObject {
+@objc public class MiddlewareRumBuilder: NSObject {
     public var target: String?
     public var serviceName: String?
     public var projectName: String?
@@ -14,96 +14,96 @@ public class MiddlewareRumBuilder: NSObject {
     public var sessionSamplingRatio: Double = 1.0
     private var configFlags: ConfigFlags
     
-    public override init () {
+    @objc public override init () {
         configFlags = ConfigFlags()
     }
     
-    public func target(_ target: String) -> MiddlewareRumBuilder {
+    @objc public func target(_ target: String) -> MiddlewareRumBuilder {
         self.target = target
         return self
     }
     
-    public func serviceName(_ serviceName: String) -> MiddlewareRumBuilder {
+    @objc public func serviceName(_ serviceName: String) -> MiddlewareRumBuilder {
         self.serviceName = serviceName
         return self
     }
     
-    public func projectName(_ projectName: String) -> MiddlewareRumBuilder {
+    @objc public func projectName(_ projectName: String) -> MiddlewareRumBuilder {
         self.projectName = projectName
         return self
     }
     
-    public func rumAccessToken(_ rumAccessToken: String) -> MiddlewareRumBuilder {
+    @objc public func rumAccessToken(_ rumAccessToken: String) -> MiddlewareRumBuilder {
         self.rumAccessToken = rumAccessToken
         return self
     }
     
-    public func deploymentEnvironment(_ deploymentEnvironment: String) -> MiddlewareRumBuilder {
+    @objc public func deploymentEnvironment(_ deploymentEnvironment: String) -> MiddlewareRumBuilder {
         self.deploymentEnvironment = deploymentEnvironment
         return self
     }
     
-    public func globalAttributes(_ globalAttributes: [String: Any]) -> MiddlewareRumBuilder {
+    @objc public func globalAttributes(_ globalAttributes: [String: Any]) -> MiddlewareRumBuilder {
         self.globalAttributes = globalAttributes
         return self
     }
     
-    public func slowFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
+    @objc public func slowFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
         self.slowFrameDetectionThresholdMs = thresholdMs
         return self
     }
     
-    public func frozenFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
+    @objc public func frozenFrameDetectionThresholdMs(thresholdMs: Double) -> MiddlewareRumBuilder {
         self.frozenFrameDetectionThresholdMs = thresholdMs
         return self
     }
     
-    public func sessionSamplingRatio(samplingRatio: Double) -> MiddlewareRumBuilder {
+    @objc public func sessionSamplingRatio(samplingRatio: Double) -> MiddlewareRumBuilder {
         self.sessionSamplingRatio = samplingRatio
         return self
     }
     
-    public func disableNetworkMonitoring() -> MiddlewareRumBuilder {
+    @objc public func disableNetworkMonitoring() -> MiddlewareRumBuilder {
         configFlags.disableNetworkMonitoring();
         return self
     }
     
-    public func isNetworkMonitoringEnabled() -> Bool {
+    @objc public func isNetworkMonitoringEnabled() -> Bool {
         return configFlags.isNetworkMonitoringEnabled()
     }
     
-    public func disableSlowRenderingDetection() -> MiddlewareRumBuilder {
+    @objc public func disableSlowRenderingDetection() -> MiddlewareRumBuilder {
         configFlags.disableSlowRenderingDetection()
         return self
     }
     
-    public func isSlowRenderingDetectionEnabled() -> Bool {
+    @objc public func isSlowRenderingDetectionEnabled() -> Bool {
         return configFlags.isSlowRenderingEnabled()
     }
     
-    public func disableAppLifcycleInstrumentation() -> MiddlewareRumBuilder {
+    @objc public func disableAppLifcycleInstrumentation() -> MiddlewareRumBuilder {
         configFlags.disableAppLifecycleInstrumentation()
         return self
     }
     
-    public func disableCrashReportingInstrumentation() -> MiddlewareRumBuilder {
+    @objc public func disableCrashReportingInstrumentation() -> MiddlewareRumBuilder {
         configFlags.disableCrashReporting()
         return self
     }
     
-    public func isAppLifecycleInstrumentationEnabled() -> Bool {
+    @objc public func isAppLifecycleInstrumentationEnabled() -> Bool {
         return configFlags.isAppLifecycleInstrumentationEnabled()
     }
     
-    public func isUiInstrumentationEnabled() -> Bool {
+    @objc public func isUiInstrumentationEnabled() -> Bool {
         return configFlags.isUiInsrumentationEnabled()
     }
     
-    public func isCrashReportingEnabled() -> Bool {
+    @objc public func isCrashReportingEnabled() -> Bool {
         return configFlags.isCrashReportingEnabled()
     }
     
-    public func build() -> Bool {
+    @objc public func build() -> Bool {
         if(rumAccessToken == nil || target == nil || projectName == nil || serviceName == nil) {
             print("Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
             return false
@@ -111,5 +111,4 @@ public class MiddlewareRumBuilder: NSObject {
         }
         return MiddlewareRum.create(builder: self)
     }
-    
 }

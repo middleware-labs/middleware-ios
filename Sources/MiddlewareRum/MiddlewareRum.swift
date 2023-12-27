@@ -18,11 +18,11 @@ var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
-public class MiddlewareRum: NSObject {
+@objc public class MiddlewareRum: NSObject {
     
     static let logger: Logging.Logger = Logging.Logger(label: "MiddlewareLogger")
     
-    internal class func create(builder: MiddlewareRumBuilder) -> Bool {
+    @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
         
         let otlpTraceExporter = OtlpHttpTraceExporter(
@@ -130,7 +130,7 @@ public class MiddlewareRum: NSObject {
         return true
     }
     
-    public class func setGlobalAttributes(_ attributes: [String: Any]) {
+    @objc public class func setGlobalAttributes(_ attributes: [String: Any]) {
         globalAttributesLock.lock()
         defer {
             globalAttributesLock.unlock()
@@ -217,7 +217,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - name: Sets the name of the span
     ///   - attributes: Attach attributes to span
-    public class func addEvent(name: String, attributes: NSDictionary) {
+    @objc public class func addEvent(name: String, attributes: NSDictionary) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
@@ -234,13 +234,13 @@ public class MiddlewareRum: NSObject {
     /// Get the Middleware Session ID associated with this instance of the RUM instrumentation library.
     /// Note: this value can change throughout the lifetime of an application instance, so it is recommended that you do not cache this value, but always retrieve it from here when needed.
     /// - Returns: the session id String
-    public class func getSessionId() -> String {
+    @objc public class func getSessionId() -> String {
         return getRumSessionId()
     }
     
     /// Add screen name to view. Note this only sets screen name from main thread.
     /// - Parameter name: <#name description#>
-    public class func setScreenName(_ name: String) {
+    @objc public class func setScreenName(_ name: String) {
         if !Thread.current.isMainThread {
             logger.info("MiddlewareRum.setScreenName is not called from main thread: \(Thread.current.debugDescription)")
             return
@@ -248,7 +248,7 @@ public class MiddlewareRum: NSObject {
         setScreenNameInternal(name, true)
     }
     
-    public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
+    @objc public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
         addSessionIdCallback(callback)
     }
     
@@ -260,7 +260,7 @@ public class MiddlewareRum: NSObject {
     /// Add a custom exception to RUM monitoring. This can be useful for tracking custom error handling in your application.
     /// NOTE : This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
     /// - Parameter e: NSException associated with this event.
-    public class func addException(e: NSException) {
+    @objc  public class func addException(e: NSException) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
@@ -286,7 +286,7 @@ public class MiddlewareRum: NSObject {
     /// Add a custom errors to RUM monitoring. This can be useful for tracking custom error handling in your application.
     /// NOTE: This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
     /// - Parameter e: Error associated with this event.
-    public class func addError(e: Error) {
+    @objc public class func addError(e: Error) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
@@ -305,7 +305,7 @@ public class MiddlewareRum: NSObject {
     /// Add a custom error to RUM monitoring. This can be useful for tracking custom error handling in your application.
     /// NOTE: This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
     /// - Parameter e: String associated with this event.
-    public class func addError(e: String) {
+    @objc public class func addError(e: String) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
@@ -320,7 +320,7 @@ public class MiddlewareRum: NSObject {
         span.end(time: now)
     }
     
-    public class func integrateWebViewWithBrowserRum(view: WKWebView) {
+    @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
         let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
     }
@@ -329,7 +329,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional dditional information with log
-    public class func trace(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func trace(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.trace(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .trace, metadata: metadata ?? [:])
     }
@@ -338,7 +338,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.info(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .info, metadata: metadata ?? [:])
     }
@@ -347,7 +347,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.error(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .error, metadata: metadata ?? [:])
     }
@@ -356,7 +356,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.debug(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .debug, metadata: metadata ?? [:])
     }
@@ -365,7 +365,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.warning(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .warn, metadata: metadata ?? [:])
     }
@@ -374,7 +374,7 @@ public class MiddlewareRum: NSObject {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    @objc public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.critical(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
