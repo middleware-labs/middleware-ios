@@ -305,7 +305,7 @@ let globalAttributesLock = NSLock()
     /// Add a custom error to RUM monitoring. This can be useful for tracking custom error handling in your application.
     /// NOTE: This event will be turned into a Span and sent to the RUM ingest along with other, auto-generated spans.
     /// - Parameter e: String associated with this event.
-    @objc public class func addError(e: String) {
+    @objc public class func addError(_ e: String) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
             instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: Constants.Global.VERSION_STRING)
@@ -329,7 +329,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional dditional information with log
-    @objc public class func trace(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func trace(_ message: Logging.Logger.Message, _ metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.trace(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .trace, metadata: metadata ?? [:])
     }
@@ -338,7 +338,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    @objc public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.info(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .info, metadata: metadata ?? [:])
     }
@@ -347,7 +347,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    @objc public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.error(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .error, metadata: metadata ?? [:])
     }
@@ -356,7 +356,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    @objc public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.debug(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .debug, metadata: metadata ?? [:])
     }
@@ -365,7 +365,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    @objc public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.warning(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .warn, metadata: metadata ?? [:])
     }
@@ -374,7 +374,7 @@ let globalAttributesLock = NSLock()
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    @objc public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
+    public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.critical(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
