@@ -119,8 +119,12 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isCrashReportingEnabled()) {
+#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
             let crashReporting = CrashReportingInstrumentation()
             crashReporting.start()
+#elseif os(tvOS)
+            logger.info("Crash reporting instrumentation is not supported in tvOS")
+#endif
         }
         
         if(builder.isUiInstrumentationEnabled()) {

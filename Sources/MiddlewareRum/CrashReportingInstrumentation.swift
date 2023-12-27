@@ -1,5 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
@@ -166,3 +167,4 @@ class CrashReportingInstrumentation {
         return String(format: "%-4ld%-35@ 0x%016lx %@", frameNum, imageName, frame.instructionPointer, symbolString!)
     }
 }
+#endif
