@@ -328,8 +328,12 @@ let globalAttributesLock = NSLock()
     }
     
     @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
+#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
         let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
+#else
+        logger.info("MiddlewareRum: WebView Instrumentation is not supported in tvOS")
+#endif
     }
     
     /// Send trace log message.
