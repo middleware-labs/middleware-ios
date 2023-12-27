@@ -10,7 +10,9 @@ import URLSessionInstrumentation
 import NetworkStatus
 import SignPostIntegration
 import ResourceExtension
+#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import WebKit
+#endif
 import Logging
 
 var middlewareRumInitTime = Date()
@@ -107,7 +109,7 @@ let globalAttributesLock = NSLock()
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
 #elseif os(macOS)
-            logger.info("Slow rendering is supported only in iOS")
+            logger.info("Slow rendering is not supported in macOS")
 #endif
         }
         
@@ -119,12 +121,8 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isCrashReportingEnabled()) {
-#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
             let crashReporting = CrashReportingInstrumentation()
             crashReporting.start()
-#elseif os(tvOS)
-            logger.info("Crash reporting instrumentation is not supported in tvOS")
-#endif
         }
         
         if(builder.isUiInstrumentationEnabled()) {
