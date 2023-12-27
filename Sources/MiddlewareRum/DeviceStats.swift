@@ -12,7 +12,7 @@ import IOKit.ps
 
 internal class DeviceStats {
     class var batteryLevel: String {
-        var level = 0
+        var level = Float(0)
 #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         level = abs(UIDevice.current.batteryLevel * 100)
@@ -24,7 +24,7 @@ internal class DeviceStats {
             if let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] {
                 if let capacity = info[kIOPSCurrentCapacityKey] as? Int,
                    let maxCapacity = info[kIOPSMaxCapacityKey] as? Int {
-                    level = Int(abs(Float(capacity) / Float(maxCapacity)))
+                    level = abs(Float(capacity) / Float(maxCapacity))
                 }
             }
         }
