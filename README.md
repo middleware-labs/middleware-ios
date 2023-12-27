@@ -7,7 +7,10 @@
 - Network Monitoring
 - Crash Reporting
 - AppLifecycle Instrumentation
+- Slow Rendering Detection
+- WebView Instrumentation
 - Api for sending custom errors & record exceptions
+- Custom logging
             
 ## Setup
             
