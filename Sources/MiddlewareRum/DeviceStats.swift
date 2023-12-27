@@ -2,22 +2,34 @@
 
 import Foundation
 import System
-#if os(iOS)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 #elseif os(macOS)
 import AppKit
+import IOKit.ps
 #endif
 
 
 internal class DeviceStats {
     class var batteryLevel: String {
-        var level = ""
-        #if os(iOS)
+        var level = 0.0
+#if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         level = abs(UIDevice.current.batteryLevel * 100)
-        #elseif os(macOS)
-        #endif
-
+#elseif os(macOS)
+        let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as [CFTypeRef]
+        
+        for source in sources {
+            if let info = IOPSGetPowerSourceDescription(snapshot, source)?.takeUnretainedValue() as? [String: Any] {
+                if let capacity = info[kIOPSCurrentCapacityKey] as? Int,
+                   let maxCapacity = info[kIOPSMaxCapacityKey] as? Int {
+                    level = Double(Float(capacity) / Float(maxCapacity))
+                }
+            }
+        }
+#endif
+        
         return "\(level)%"
     }
     class var freeDiskSpace: String {

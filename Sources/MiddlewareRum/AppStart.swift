@@ -81,11 +81,11 @@ class AppStart {
                 appStart.end()
             }
         }
-        #if os(iOS)
+#if os(iOS)
         didBecomeActiveNotificationToken = notifCenter.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main, using: didBecomeActiveClosure)
-        #elseif os(macOS)
+#elseif os(macOS)
         didBecomeActiveNotificationToken = notifCenter.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main, using: didBecomeActiveClosure)
-        #endif
+#endif
         
         var didFinishLaunchingNotificationToken: NSObjectProtocol?
         let didFinishLaunchingClosure: (Notification) -> Void = { notification in
@@ -95,32 +95,32 @@ class AppStart {
             }
         }
         
-        #if os(iOS)
+#if os(iOS)
         didFinishLaunchingNotificationToken = notifCenter.addObserver(forName: UIApplication.didFinishLaunchingNotification, object: nil, queue: .main, using: didFinishLaunchingClosure)
-        #elseif os(macOS)
+#elseif os(macOS)
         didFinishLaunchingNotificationToken = notifCenter.addObserver(forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main, using: didFinishLaunchingClosure)
         
-        #endif
+#endif
         
         // willEnterForeground
         var willEnterForegroundNotificationToken: NSObjectProtocol?
         let willEnterForegroundClosure: (Notification) -> Void = { notification in
-            #if os(iOS)
+#if os(iOS)
             self.wasBackgroundedBeforeWillEnterForeground = UIApplication.shared.applicationState == .background
-            #elseif os(macOS)
+#elseif os(macOS)
             self.wasBackgroundedBeforeWillEnterForeground = NSApplication.shared.isActive == false
-            #endif
-
+#endif
+            
             self.appStart?.addEvent(name: notification.name.rawValue)
             if let willEnterForegroundNotificationToken = willEnterForegroundNotificationToken {
                 notifCenter.removeObserver(willEnterForegroundNotificationToken)
             }
         }
-        #if os(iOS)
+#if os(iOS)
         willEnterForegroundNotificationToken = notifCenter.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main, using: willEnterForegroundClosure)
-        #elseif os(macOS)
+#elseif os(macOS)
         willEnterForegroundNotificationToken = notifCenter.addObserver(forName: NSApplication.willBecomeActiveNotification, object: nil, queue: .main, using: willEnterForegroundClosure)
-        #endif
+#endif
     }
     
     private func constructAppStartSpan() {

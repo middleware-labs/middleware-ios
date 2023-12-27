@@ -104,11 +104,11 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
-            #if os(iOS)
+#if os(iOS)
             _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
-            #elseif os(macOS)
+#elseif os(macOS)
             logger.info("Slow rendering is supported only in iOS")
-            #endif
+#endif
         }
         
         initializeNetworkTypeMonitoring()
@@ -124,12 +124,12 @@ let globalAttributesLock = NSLock()
         }
         
         if(builder.isUiInstrumentationEnabled()) {
-            #if os(iOS)
+#if os(iOS)
             let uiInstrumentation = UIInstrumentation()
             uiInstrumentation.start()
-            #elseif os(macOS)
+#elseif os(macOS)
             logger.info("UI instrumentation is supported only in iOS")
-            #endif
+#endif
         }
         
         mwInit.end()
