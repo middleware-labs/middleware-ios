@@ -208,6 +208,9 @@ let globalAttributesLock = NSLock()
             spanCustomization: { URLRequest, spanBuilder in
                 spanBuilder.setAttribute(key: Constants.Attributes.COMPONENT, value: "http")
                 spanBuilder.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "fetch")
+            },
+            receivedError: { (error: Error, _: DataOrFile?, status: HTTPStatus, span: Span) in
+                span.addEvent(name: "error", attributes: ["description" : AttributeValue(error.localizedDescription)])
             }
         )
         )
