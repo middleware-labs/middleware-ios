@@ -175,6 +175,12 @@ MiddlewareRum.addException(e: NSException(name: NSExceptionName(rawValue: "Runti
 MiddlewareRum.setScreenName("WebView")
 ```
 
+### Set Global Attributes
+
+```swift
+MiddlewareRum.setGlobalAttributes(["some": "value"])
+```
+
 ### WebView Instrumentation
 
 ```swift
