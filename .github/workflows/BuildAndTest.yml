@@ -6,7 +6,7 @@ jobs:
   macOS:
     runs-on: macOS-13
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: 15.1
@@ -21,7 +21,7 @@ jobs:
   iOS:
     runs-on: macOS-13
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: 15.1
@@ -34,7 +34,7 @@ jobs:
   tvOS:
     runs-on: macOS-13
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: 15.1
