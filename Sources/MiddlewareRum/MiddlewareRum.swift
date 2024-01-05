@@ -402,7 +402,7 @@ let globalAttributesLock = NSLock()
             .get(instrumentationScopeName: Constants.Global.INSTRUMENTATION_NAME)
             .logRecordBuilder()
             .setSeverity(severity)
-            .setBody(message.description)
+            .setBody(AttributeValue(message.description))
             .setAttributes(attribute)
             .emit()
     }
