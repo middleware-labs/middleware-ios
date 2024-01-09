@@ -1,7 +1,7 @@
 # middleware-ios
 ---
 <p align="center">
-    <a href="https://github.com/middleware-labs/middleware-android/releases">
+    <a href="https://github.com/middleware-labs/middleware-ios/releases">
         <img alt="Build Status" src="https://img.shields.io/badge/status-beta-orange">
       </a>
     <a href="https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml?query=branch%3Amain+">
