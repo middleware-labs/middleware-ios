@@ -1,8 +1,18 @@
 # middleware-ios
-[![CI](https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml/badge.svg)](https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml?query=branch%3Amain+)
-<a href="https://github.com/middleware-labs/middleware-android/releases">
-    <img alt="GitHub release (latest SemVer)" src="https://img.shields.io/github/v/release/middleware-labs/middleware-ios?include_prereleases&style=flat">
-</a>
+---
+<p align="center">
+    <a href="https://github.com/middleware-labs/middleware-android/releases">
+        <img alt="Build Status" src="https://img.shields.io/badge/status-beta-orange">
+      </a>
+    <a href="https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml?query=branch%3Amain+">
+        <img alt="GitHub release (latest SemVer)" src="https://github.com/middleware-labs/middleware-ios/actions/workflows/BuildAndTest.yml/badge.svg">
+    </a>
+    <a href="https://github.com/middleware-labs/middleware-android/releases">
+        <img alt="GitHub release (latest SemVer)" src="https://img.shields.io/github/v/release/middleware-labs/middleware-ios?include_prereleases&style=flat">
+    </a>
+</p>
+
+---
 
 ## Features
 
