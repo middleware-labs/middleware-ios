@@ -117,7 +117,7 @@ private func pickVC(_ vc: UIViewController?) -> UIViewController? {
     return vc
 }
 
-private func pickWindow() -> UIWindow? {
+func pickWindow() -> UIWindow? {
     let app = UIApplication.shared
     let key = app.windows.last { $0.isKeyWindow }
     if key != nil {

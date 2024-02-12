@@ -82,7 +82,7 @@ open class ScreenshotManager {
 
     // MARK: - UI Capturing
     func takeScreenshot() {
-        let window = UIApplication.shared.windows.first { $0.isKeyWindow }
+        let window = pickWindow()
         let size = window?.frame.size ?? CGSize.zero
         UIGraphicsBeginImageContextWithOptions(size, false, screenScale)
         guard let context = UIGraphicsGetCurrentContext() else { return }
