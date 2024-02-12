@@ -1,8 +1,9 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
-import Foundation
+import UIKit
+import Network
 
-@objc public class MiddlewareRumBuilder: NSObject {
+@objc open class MiddlewareRumBuilder: NSObject {
     public var target: String?
     public var serviceName: String?
     public var projectName: String?
@@ -108,12 +109,26 @@ import Foundation
         return configFlags.isCrashReportingEnabled()
     }
     
-    @objc public func build() -> Bool {
+    @objc open func build() -> Bool {
         if(rumAccessToken == nil || target == nil || projectName == nil || serviceName == nil) {
             print("Middleware: You must provide a rumAccessToken, target, projectName and serviceName to create a valid Config instance.")
             return false
             
         }
-        return MiddlewareRum.create(builder: self)
+        
+        let isBuilt = MiddlewareRum.create(builder: self)
+        if(isBuilt) {
+            
+            let monitor = NWPathMonitor()
+
+            let q = DispatchQueue.global(qos: .background)
+            monitor.start(queue: q)
+
+            let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+            ScreenshotManager.shared.setSettings(settings: captureSettings)
+            ScreenshotManager(target: self.target!, token: self.rumAccessToken).start()
+            
+        }
+        return isBuilt
     }
 }
