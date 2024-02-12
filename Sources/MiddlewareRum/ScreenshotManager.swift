@@ -267,3 +267,22 @@ func getCaptureSettings(for quality: RecordingQuality) -> (captureRate: Double, 
         return (captureRate: 0.20, imgCompression: 0.55)
     }
 }
+
+func getCaptureSettings(fps: Int, quality: String) -> (captureRate: Double, imgCompression: Double) {
+    let limitedFPS = min(max(fps, 1), 99)
+    let captureRate = 1.0 / Double(limitedFPS)
+    
+    var imgCompression: Double
+    switch quality.lowercased() {
+    case "low":
+        imgCompression = 0.4
+    case "standard":
+        imgCompression = 0.5
+    case "high":
+        imgCompression = 0.6
+    default:
+        imgCompression = 0.5  // default to standard if quality string is not recognized
+    }
+    
+    return (captureRate: captureRate, imgCompression: imgCompression)
+}

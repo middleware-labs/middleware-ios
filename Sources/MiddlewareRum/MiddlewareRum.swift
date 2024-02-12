@@ -133,7 +133,8 @@ let globalAttributesLock = NSLock()
             logger.info("UI instrumentation is supported only in iOS")
 #endif
         }
-        
+        let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+        ScreenshotManager.shared.setSettings(settings: captureSettings)
         ScreenshotManager(target: builder.target!, token: builder.rumAccessToken).start()
         
         mwInit.end()
