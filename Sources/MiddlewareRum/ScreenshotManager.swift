@@ -36,7 +36,7 @@ open class ScreenshotManager {
     private var target: String?
     private var token: String?
     
-    init() {}
+    private init() {}
     
     init(target: String?, token: String?) {
         self.target = target
@@ -62,7 +62,7 @@ open class ScreenshotManager {
         takeScreenshot()
         
         self.timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self!.takeScreenshot()
+            self?.takeScreenshot()
         }
     }
 
