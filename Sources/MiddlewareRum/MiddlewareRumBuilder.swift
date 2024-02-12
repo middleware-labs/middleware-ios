@@ -77,6 +77,11 @@ import Foundation
         return self
     }
     
+    @objc public func disableUIInstrumentation() -> MiddlewareRumBuilder {
+        configFlags.disableUiInsrumentation()
+        return self
+    }
+    
     @objc public func isSlowRenderingDetectionEnabled() -> Bool {
         return configFlags.isSlowRenderingEnabled()
     }
