@@ -134,6 +134,8 @@ let globalAttributesLock = NSLock()
 #endif
         }
         
+        ScreenshotManager(target: builder.target!, token: builder.rumAccessToken).start()
+        
         mwInit.end()
         
         return true
@@ -391,6 +393,10 @@ let globalAttributesLock = NSLock()
     public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
         logger.critical(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
+    }
+    
+    public class func startRecording() {
+        
     }
     
     private class func log(message: Logging.Logger.Message, severity: Severity, metadata: [String: Logging.Logger.MetadataValue]) {
