@@ -55,7 +55,7 @@ class NetworkManager: NSObject {
             completion(false)
             return
         }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("\(token)", forHTTPHeaderField: "Authorization")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
