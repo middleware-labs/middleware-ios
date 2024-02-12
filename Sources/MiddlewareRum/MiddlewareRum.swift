@@ -158,13 +158,14 @@ public enum CheckState {
             }
         }
         
-        
-        let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
-        ScreenshotManager.shared.setSettings(settings: captureSettings)
+
         
         networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
             if trackerState == CheckState.canStart {
-                ScreenshotManager(target: builder.target!, token: builder.rumAccessToken).start()
+                let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+                let screenshotManager = ScreenshotManager(target: builder.target!, token: builder.rumAccessToken)
+                screenshotManager.setSettings(settings: captureSettings)
+                screenshotManager.start()
                 networkCheckTimer?.invalidate()
             }
             if trackerState == CheckState.cantStart {

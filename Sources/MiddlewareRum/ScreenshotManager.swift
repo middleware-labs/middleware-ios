@@ -52,8 +52,8 @@ open class ScreenshotManager {
     }
     
     func stop() {
-        timer?.invalidate()
-        timer = nil
+        self.timer?.invalidate()
+        self.timer = nil
         lastIndex = 0
         screenshots.removeAll()
     }
@@ -61,7 +61,7 @@ open class ScreenshotManager {
     func startTakingScreenshots(every interval: TimeInterval) {
         takeScreenshot()
         
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        self.timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.takeScreenshot()
         }
     }
