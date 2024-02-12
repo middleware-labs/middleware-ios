@@ -1,6 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
-import Foundation
+import UIKit
 import OpenTelemetrySdk
 import OpenTelemetryApi
 import OpenTelemetryProtocolExporterCommon
@@ -133,6 +133,11 @@ let globalAttributesLock = NSLock()
             logger.info("UI instrumentation is supported only in iOS")
 #endif
         }
+        let monitor = NWPathMonitor()
+
+        let q = DispatchQueue.global(qos: .background)
+        monitor.start(queue: q)
+
         let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
         ScreenshotManager.shared.setSettings(settings: captureSettings)
         ScreenshotManager(target: builder.target!, token: builder.rumAccessToken).start()
