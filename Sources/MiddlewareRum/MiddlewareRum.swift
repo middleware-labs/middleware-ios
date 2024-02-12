@@ -19,12 +19,21 @@ var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
+public enum CheckState {
+    case unchecked
+    case canStart
+    case cantStart
+}
+
 @objc public class MiddlewareRum: NSObject {
     
     static let logger: Logging.Logger = Logging.Logger(label: "MiddlewareLogger")
-    
+
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
+        
+        var trackerState = CheckState.unchecked
+        var networkCheckTimer: Timer?
         
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
@@ -127,12 +136,42 @@ let globalAttributesLock = NSLock()
         
         if(builder.isUiInstrumentationEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-//            let uiInstrumentation = UIInstrumentation()
-//            uiInstrumentation.start()
+            let uiInstrumentation = UIInstrumentation()
+            uiInstrumentation.start()
 #elseif os(macOS)
             logger.info("UI instrumentation is supported only in iOS")
 #endif
         }
+        let monitor = NWPathMonitor()
+
+        let q = DispatchQueue.global(qos: .background)
+        monitor.start(queue: q)
+
+        monitor.pathUpdateHandler = { path in
+            if path.usesInterfaceType(.wifi) {
+                trackerState = CheckState.canStart
+            } else if path.usesInterfaceType(.cellular) {
+                trackerState = CheckState.canStart
+            } else {
+                trackerState = CheckState.cantStart
+                print("Not connected to either WiFi or Cellular. Openreplay will not start.")
+            }
+        }
+        
+        
+        let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+        ScreenshotManager.shared.setSettings(settings: captureSettings)
+        
+        networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
+            if trackerState == CheckState.canStart {
+                ScreenshotManager(target: builder.target!, token: builder.rumAccessToken).start()
+                networkCheckTimer?.invalidate()
+            }
+            if trackerState == CheckState.cantStart {
+                networkCheckTimer?.invalidate()
+            }
+        })
+        
         mwInit.end()
         
         return true
