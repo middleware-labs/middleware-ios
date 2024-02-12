@@ -37,13 +37,10 @@ open class ScreenshotManager {
     private var token: String?
     
     private init() {}
-    
-    init(target: String?, token: String?) {
+
+    func start(target: String?, token: String?) {
         self.target = target
         self.token = token
-    }
-
-    func start() {
         startTakingScreenshots(every: settings.captureRate)
     }
     

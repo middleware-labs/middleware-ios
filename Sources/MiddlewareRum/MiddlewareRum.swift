@@ -163,9 +163,8 @@ public enum CheckState {
         networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
             if trackerState == CheckState.canStart {
                 let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
-                let screenshotManager = ScreenshotManager(target: builder.target!, token: builder.rumAccessToken)
-                screenshotManager.setSettings(settings: captureSettings)
-                screenshotManager.start()
+                ScreenshotManager.shared.setSettings(settings: captureSettings)
+                ScreenshotManager.shared.start(target: builder.target, token: builder.rumAccessToken)
                 networkCheckTimer?.invalidate()
             }
             if trackerState == CheckState.cantStart {
