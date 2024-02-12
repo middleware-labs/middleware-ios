@@ -62,7 +62,7 @@ open class ScreenshotManager {
         takeScreenshot()
         
         self.timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.takeScreenshot()
+            self!.takeScreenshot()
         }
     }
 
