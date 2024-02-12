@@ -127,8 +127,8 @@ let globalAttributesLock = NSLock()
         
         if(builder.isUiInstrumentationEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-            let uiInstrumentation = UIInstrumentation()
-            uiInstrumentation.start()
+//            let uiInstrumentation = UIInstrumentation()
+//            uiInstrumentation.start()
 #elseif os(macOS)
             logger.info("UI instrumentation is supported only in iOS")
 #endif
