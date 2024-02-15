@@ -3,7 +3,7 @@
 import UIKit
 import SWCompression
 
-let IMAGES_URL = "/v1/traces/rum"
+let IMAGES_URL = "/v1/rum"
 
 class NetworkManager: NSObject {
     public var baseUrl: String? = nil
