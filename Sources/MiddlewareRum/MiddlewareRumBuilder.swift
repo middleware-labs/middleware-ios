@@ -1,6 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
-import UIKit
+import Foundation
 
 @objc public class MiddlewareRumBuilder: NSObject {
     public var target: String?
@@ -131,3 +131,4 @@ import UIKit
         return MiddlewareRum.create(builder: self)
     }
 }
+

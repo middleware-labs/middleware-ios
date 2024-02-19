@@ -1,5 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 
 private var viewCounter = 0
@@ -25,4 +26,4 @@ extension UIView: Sanitizable {
         return self.window == nil ? nil : self.convert(self.bounds, to: self.window)
     }
 }
-
+#endif

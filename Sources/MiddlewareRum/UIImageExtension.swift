@@ -1,5 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 
 extension UIImage {
@@ -24,3 +25,4 @@ extension UIImage {
             return UIImage(cgImage: outputCGImage)
         }
 }
+#endif

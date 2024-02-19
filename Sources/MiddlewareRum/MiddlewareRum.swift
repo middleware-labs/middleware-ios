@@ -1,6 +1,5 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
-
-import UIKit
+import Foundation
 import OpenTelemetrySdk
 import OpenTelemetryApi
 import OpenTelemetryProtocolExporterCommon
@@ -144,18 +143,14 @@ public enum CheckState {
         }
         
         if(builder.isRecordingEnabled()) {
-            let monitor = NWPathMonitor()
-            let q = DispatchQueue.global(qos: .background)
-            monitor.start(queue: q)
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 
-            monitor.pathUpdateHandler = { path in
-                if path.usesInterfaceType(.wifi) {
+            if NetworkReachability.isConnectedViaWiFi() {
                     trackerState = CheckState.canStart
-                } else if path.usesInterfaceType(.cellular) {
+            } else if NetworkReachability.isConnectedViaCellular() {
                     trackerState = CheckState.canStart
-                } else {
-                    trackerState = CheckState.cantStart
-                }
+            } else {
+                trackerState = CheckState.cantStart
             }
 
             networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
@@ -169,6 +164,9 @@ public enum CheckState {
                     networkCheckTimer?.invalidate()
                 }
             })
+#else
+            print("Session recording is not supported.")
+#endif
         }
         
         mwInit.end()

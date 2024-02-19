@@ -1,5 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 import Foundation
 import SwiftUI
@@ -283,3 +284,4 @@ func getCaptureSettings(fps: Int, quality: String) -> (captureRate: Double, imgC
     
     return (captureRate: captureRate, imgCompression: imgCompression)
 }
+#endif

@@ -1,5 +1,5 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
-
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import UIKit
 import SWCompression
 
@@ -35,10 +35,6 @@ class NetworkManager: NSObject {
                       let httpResponse = response as? HTTPURLResponse,
                       (200...299).contains(httpResponse.statusCode) else {
                     DebugUtils.error(">>>>>> Error in call \(request.url?.absoluteString ?? "") : \(error?.localizedDescription ?? "N/A")")
-                    if (response as? HTTPURLResponse)?.statusCode == 401 {
-                        self.token = nil
-//                        Openreplay.shared.startSession(projectKey: Openreplay.shared.projectKey ?? "", options: Openreplay.shared.options)
-                    }
                     onError(error)
                     return
                 }
@@ -84,3 +80,4 @@ class NetworkManager: NSObject {
         }
     }
 }
+#endif
