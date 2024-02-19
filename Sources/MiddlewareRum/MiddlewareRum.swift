@@ -145,9 +145,7 @@ public enum CheckState {
         if(builder.isRecordingEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 
-            if NetworkReachability.isConnectedViaWiFi() {
-                    trackerState = CheckState.canStart
-            } else if NetworkReachability.isConnectedViaCellular() {
+            if NetworkReachability.isNetworkAvailable() {
                     trackerState = CheckState.canStart
             } else {
                 trackerState = CheckState.cantStart
