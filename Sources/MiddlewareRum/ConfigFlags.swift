@@ -9,6 +9,7 @@ class ConfigFlags {
     var appLifecycleInstumentationEnabled: Bool = true
     var crashReportingEnabled: Bool = true
     var uiInstrumentationEnabled: Bool = true
+    var recordingEnabled: Bool = true
     
     init () {}
     
@@ -34,6 +35,18 @@ class ConfigFlags {
     
     func disableUiInsrumentation() {
         self.uiInstrumentationEnabled = false
+    }
+    
+    func disableRecording() {
+        self.recordingEnabled = false
+    }
+    
+    func enableRecording() {
+        self.recordingEnabled = true
+    }
+    
+    func isRecordingEnabled() -> Bool {
+        return self.recordingEnabled
     }
     
     func isSlowRenderingEnabled()  -> Bool {

@@ -142,35 +142,34 @@ public enum CheckState {
             logger.info("UI instrumentation is supported only in iOS")
 #endif
         }
-        let monitor = NWPathMonitor()
+        
+        if(builder.isRecordingEnabled()) {
+            let monitor = NWPathMonitor()
+            let q = DispatchQueue.global(qos: .background)
+            monitor.start(queue: q)
 
-        let q = DispatchQueue.global(qos: .background)
-        monitor.start(queue: q)
-
-        monitor.pathUpdateHandler = { path in
-            if path.usesInterfaceType(.wifi) {
-                trackerState = CheckState.canStart
-            } else if path.usesInterfaceType(.cellular) {
-                trackerState = CheckState.canStart
-            } else {
-                trackerState = CheckState.cantStart
-                print("Not connected to either WiFi or Cellular. Openreplay will not start.")
+            monitor.pathUpdateHandler = { path in
+                if path.usesInterfaceType(.wifi) {
+                    trackerState = CheckState.canStart
+                } else if path.usesInterfaceType(.cellular) {
+                    trackerState = CheckState.canStart
+                } else {
+                    trackerState = CheckState.cantStart
+                }
             }
+
+            networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
+                if trackerState == CheckState.canStart {
+                    let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+                    ScreenshotManager.shared.setSettings(settings: captureSettings)
+                    ScreenshotManager.shared.start(target: builder.target, token: builder.rumAccessToken)
+                    networkCheckTimer?.invalidate()
+                }
+                if trackerState == CheckState.cantStart {
+                    networkCheckTimer?.invalidate()
+                }
+            })
         }
-        
-
-        
-        networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
-            if trackerState == CheckState.canStart {
-                let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
-                ScreenshotManager.shared.setSettings(settings: captureSettings)
-                ScreenshotManager.shared.start(target: builder.target, token: builder.rumAccessToken)
-                networkCheckTimer?.invalidate()
-            }
-            if trackerState == CheckState.cantStart {
-                networkCheckTimer?.invalidate()
-            }
-        })
         
         mwInit.end()
         
