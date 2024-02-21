@@ -11,6 +11,7 @@ import SignPostIntegration
 import ResourceExtension
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import WebKit
+import UIKit
 #endif
 import Logging
 
@@ -27,7 +28,7 @@ public enum CheckState {
 @objc public class MiddlewareRum: NSObject {
     
     static let logger: Logging.Logger = Logging.Logger(label: "MiddlewareLogger")
-
+    
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
         
@@ -144,13 +145,13 @@ public enum CheckState {
         
         if(builder.isRecordingEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-
+            
             if NetworkReachability.isNetworkAvailable() {
-                    trackerState = CheckState.canStart
+                trackerState = CheckState.canStart
             } else {
                 trackerState = CheckState.cantStart
             }
-
+            
             networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
                 if trackerState == CheckState.canStart {
                     let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
@@ -364,14 +365,14 @@ public enum CheckState {
         span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
     }
-
+    
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
     @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
         let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
     }
 #endif
-
+    
     /// Send trace log message.
     /// - Parameters:
     ///   - message: message that you like to log
@@ -425,11 +426,21 @@ public enum CheckState {
         logger.critical(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
-    
-    public class func startRecording() {
-        
+
+#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
+    /// Sanitize sensitive information
+    /// - Parameter view: Any UIView will be blurred
+    @objc public class func addIgnoredView(_ view: UIView) {
+        ScreenshotManager.shared.addSanitizedElement(view)
     }
     
+    /// To show sensitive information use this method.
+    /// - Parameter view: Any view which is been sanitize already.
+    @objc public class func removeIgnoredView(_ view: UIView) {
+        ScreenshotManager.shared.removeSanitizedElement(view)
+    }
+#endif
+
     private class func log(message: Logging.Logger.Message, severity: Severity, metadata: [String: Logging.Logger.MetadataValue]) {
         var attribute: [String: AttributeValue] = [:]
         for (name, value) in metadata {
