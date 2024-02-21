@@ -57,6 +57,7 @@ struct MenuView: View {
             }.buttonStyle(PlainButtonStyle())
         HStack {
             TextField("Text", text: $text)
+                .sensitive()
                 .padding()
                 .keyboardType(.numberPad)
             Button(action: { hideKeyboard() } , label: {

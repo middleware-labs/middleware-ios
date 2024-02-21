@@ -230,7 +230,7 @@ public enum CheckState {
                 guard let url = URLRequest.url?.absoluteString else {
                     return true
                 }
-                let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces", "/v1/rum", "/v1/traces/rum"]
+                let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces", "/v1/rum"]
                 
                 for path in excludedPaths {
                     if url.contains(path) {
