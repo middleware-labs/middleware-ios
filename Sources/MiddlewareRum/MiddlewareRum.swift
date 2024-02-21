@@ -11,6 +11,9 @@ import SignPostIntegration
 import ResourceExtension
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import WebKit
+#endif
+
+#if os(ios) || targetEnvironment(macCatalyst)
 import UIKit
 #endif
 import Logging
@@ -427,7 +430,7 @@ public enum CheckState {
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
 
-#if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
+#if os(iOS) || targetEnvironment(macCatalyst)
     /// Sanitize sensitive information
     /// - Parameter view: Any UIView will be blurred
     @objc public class func addIgnoredView(_ view: UIView) {
