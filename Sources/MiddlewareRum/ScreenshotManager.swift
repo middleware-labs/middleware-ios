@@ -22,7 +22,9 @@ open class ScreenshotManager {
 
     private var sanitizedElements: [Sanitizable] = []
     private var observedInputs: [UITextField] = []
-    private var screenshots: [Data] = []
+    private var screenshots: [(Data, UInt64)] = []
+    private var lastTs: UInt64 = 0
+    private var firstTs: UInt64 = 0
     private var lastIndex = 0
     // MARK: capture settings
     // should we blur out sensitive views, or place a solid box on top
@@ -39,7 +41,8 @@ open class ScreenshotManager {
     
     private init() {}
 
-    func start(target: String?, token: String?) {
+    func start(startTs: UInt64, target: String?, token: String?) {
+        self.firstTs = startTs
         self.target = target
         self.token = token
         startTakingScreenshots(every: settings.captureRate)
@@ -155,7 +158,7 @@ open class ScreenshotManager {
         // Get the resulting image
         if let image = UIGraphicsGetImageFromCurrentImageContext() {
             if let compressedData = image.jpegData(compressionQuality: self.settings.imgCompression) {
-                screenshots.append(compressedData)
+                screenshots.append((compressedData, UInt64(Date().timeIntervalSince1970 * 1000)))
                 if screenshots.count >= 10 {
                     self.sendScreenshots()
                 }
@@ -174,20 +177,21 @@ open class ScreenshotManager {
         var combinedData = Data()
         let images = screenshots
         for (_, imageData) in screenshots.enumerated() {
-            combinedData.append(imageData)
+            combinedData.append(imageData.0)
         }
     
         messagesQueue.addOperation {
             var entries: [TarEntry] = []
             for imageData in images {
-                let filename = "\(String(format: "%06d", self.lastIndex)).jpeg"
-                var tarEntry = TarContainer.Entry(info: .init(name: filename, type: .regular), data: imageData)
+                let filename = "\(self.firstTs)_1_\(imageData.1).jpeg"
+                var tarEntry = TarContainer.Entry(info: .init(name: filename, type: .regular), data: imageData.0)
                 tarEntry.info.permissions = Permissions(rawValue: 420)
                 tarEntry.info.creationTime = Date()
                 tarEntry.info.modificationTime = Date()
                 
                 entries.append(tarEntry)
                 self.lastIndex+=1
+                self.lastTs = imageData.1
             }
             do {
                 let gzData = try GzipArchive.archive(data: TarContainer.create(from: entries))
@@ -200,7 +204,6 @@ open class ScreenshotManager {
     }
 }
 
-// MARK: making extensions for UI
 struct SensitiveViewWrapperRepresentable: UIViewRepresentable {
     @Binding var viewWrapper: SensitiveViewWrapper?
 
@@ -250,7 +253,6 @@ class SensitiveTextField: UITextField {
     }
 }
 
-// Protocol to make a UIView sanitizable
 public protocol Sanitizable {
     var frameInWindow: CGRect? { get }
 }

@@ -154,12 +154,13 @@ public enum CheckState {
             } else {
                 trackerState = CheckState.cantStart
             }
-            
+            let sessionStartTs = UInt64(Date().timeIntervalSince1970 * 1000)
             networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
                 if trackerState == CheckState.canStart {
+                    MessageCollector(target: builder.target, token: builder.rumAccessToken).start()
                     let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
                     ScreenshotManager.shared.setSettings(settings: captureSettings)
-                    ScreenshotManager.shared.start(target: builder.target, token: builder.rumAccessToken)
+                    ScreenshotManager.shared.start(startTs: sessionStartTs, target: builder.target, token: builder.rumAccessToken)
                     networkCheckTimer?.invalidate()
                 }
                 if trackerState == CheckState.cantStart {
