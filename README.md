@@ -31,7 +31,7 @@
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "1.0.0"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "1.0.1"),
 ```
             
 ## Initialization of Middleware iOS sdk
