@@ -5,7 +5,7 @@ import Foundation
 enum Constants {
     enum Global {
         static let INSTRUMENTATION_NAME = "middleware-ios"
-        static let VERSION_STRING = "1.0.0"
+        static let VERSION_STRING = "1.0.1"
         static let UNKNOWN_APP_NAME = "unknown-app"
     }
     
