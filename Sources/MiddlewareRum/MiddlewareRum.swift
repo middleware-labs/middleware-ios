@@ -1,5 +1,4 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
-
 import Foundation
 import OpenTelemetrySdk
 import OpenTelemetryApi
@@ -13,11 +12,21 @@ import ResourceExtension
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import WebKit
 #endif
+
+#if os(ios) || targetEnvironment(macCatalyst)
+import UIKit
+#endif
 import Logging
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
+
+public enum CheckState {
+    case unchecked
+    case canStart
+    case cantStart
+}
 
 @objc public class MiddlewareRum: NSObject {
     
@@ -25,6 +34,9 @@ let globalAttributesLock = NSLock()
     
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
+        
+        var trackerState = CheckState.unchecked
+        var networkCheckTimer: Timer?
         
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
@@ -134,6 +146,32 @@ let globalAttributesLock = NSLock()
 #endif
         }
         
+        if(builder.isRecordingEnabled()) {
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+            
+            if NetworkReachability.isNetworkAvailable() {
+                trackerState = CheckState.canStart
+            } else {
+                trackerState = CheckState.cantStart
+            }
+            let sessionStartTs = UInt64(Date().timeIntervalSince1970 * 1000)
+            networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
+                if trackerState == CheckState.canStart {
+                    MessageCollector(target: builder.target, token: builder.rumAccessToken).start()
+                    let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+                    ScreenshotManager.shared.setSettings(settings: captureSettings)
+                    ScreenshotManager.shared.start(startTs: sessionStartTs, target: builder.target, token: builder.rumAccessToken)
+                    networkCheckTimer?.invalidate()
+                }
+                if trackerState == CheckState.cantStart {
+                    networkCheckTimer?.invalidate()
+                }
+            })
+#else
+            print("Session recording is not supported.")
+#endif
+        }
+        
         mwInit.end()
         
         return true
@@ -196,7 +234,7 @@ let globalAttributesLock = NSLock()
                 guard let url = URLRequest.url?.absoluteString else {
                     return true
                 }
-                let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces"]
+                let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces", "/v1/rum"]
                 
                 for path in excludedPaths {
                     if url.contains(path) {
@@ -331,14 +369,14 @@ let globalAttributesLock = NSLock()
         span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
     }
-
+    
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
     @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
         let webkit = WebViewInstrumentation(view: view)
         webkit.enable()
     }
 #endif
-
+    
     /// Send trace log message.
     /// - Parameters:
     ///   - message: message that you like to log
@@ -392,7 +430,21 @@ let globalAttributesLock = NSLock()
         logger.critical(message, metadata: metadata ?? [:])
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
+
+#if os(iOS) || targetEnvironment(macCatalyst)
+    /// Sanitize sensitive information
+    /// - Parameter view: Any UIView will be blurred
+    @objc public class func addIgnoredView(_ view: UIView) {
+        ScreenshotManager.shared.addSanitizedElement(view)
+    }
     
+    /// To show sensitive information use this method.
+    /// - Parameter view: Any view which is been sanitize already.
+    @objc public class func removeIgnoredView(_ view: UIView) {
+        ScreenshotManager.shared.removeSanitizedElement(view)
+    }
+#endif
+
     private class func log(message: Logging.Logger.Message, severity: Severity, metadata: [String: Logging.Logger.MetadataValue]) {
         var attribute: [String: AttributeValue] = [:]
         for (name, value) in metadata {

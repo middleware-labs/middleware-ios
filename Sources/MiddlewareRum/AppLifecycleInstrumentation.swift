@@ -6,7 +6,7 @@ import OpenTelemetrySdk
 
 class AppLifecycleInstrumentation {
     
-    let INACTIVITY_SESSION_TIMEOUT_SECONDS = 15 * 60
+    let INACTIVITY_SESSION_TIMEOUT_SECONDS = 5 * 60
     private var sessionIdInactivityExpiration: Date
     
     private let events = [

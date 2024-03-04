@@ -77,6 +77,11 @@ import Foundation
         return self
     }
     
+    @objc public func disableUIInstrumentation() -> MiddlewareRumBuilder {
+        configFlags.disableUiInsrumentation()
+        return self
+    }
+    
     @objc public func isSlowRenderingDetectionEnabled() -> Bool {
         return configFlags.isSlowRenderingEnabled()
     }
@@ -89,6 +94,20 @@ import Foundation
     @objc public func disableCrashReportingInstrumentation() -> MiddlewareRumBuilder {
         configFlags.disableCrashReporting()
         return self
+    }
+    
+    @objc public func disableRecording() -> MiddlewareRumBuilder {
+        configFlags.disableRecording()
+        return self
+    }
+    
+    @objc public func enableRecording() -> MiddlewareRumBuilder {
+        configFlags.enableRecording()
+        return self
+    }
+    
+    @objc public func isRecordingEnabled() -> Bool {
+        return configFlags.isRecordingEnabled()
     }
     
     @objc public func isAppLifecycleInstrumentationEnabled() -> Bool {
@@ -112,3 +131,4 @@ import Foundation
         return MiddlewareRum.create(builder: self)
     }
 }
+

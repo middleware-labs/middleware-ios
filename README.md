@@ -24,6 +24,7 @@
 - WebView Instrumentation
 - Api for sending custom errors & record exceptions
 - Custom logging
+- Session Recording
             
 ## Setup
             
@@ -42,18 +43,14 @@ import MiddlewareRum
 @main
 struct YourApp: App {
     init() {
-        do {
-            try MiddlewareRumBuilder()
-                .globalAttributes(["customerId" : "123456"])
-                .target("<target>")
-                .serviceName("Mobile-SDK-iOS")
-                .projectName("Mobile-SDK-iOS")
-                .rumAccessToken("<account-key>")
-                .deploymentEnvironment("PROD")
-                .build()
-        } catch {
-            print("Failed to initialize \(error)")
-        }
+        MiddlewareRumBuilder()
+            .globalAttributes(["customerId" : "123456"])
+            .target("<target>")
+            .serviceName("Mobile-SDK-iOS")
+            .projectName("Mobile-SDK-iOS")
+            .rumAccessToken("<account-key>")
+            .deploymentEnvironment("PROD")
+            .build()
         
     }
     var body: some Scene {
@@ -198,4 +195,31 @@ MiddlewareRum.setGlobalAttributes(["some": "value"])
 
 ```swift
 MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
+```
+
+### Enable Session Recording
+
+By default session recording is enabled, to disable call `.disableRecording()` :
+
+```swift
+    MiddlewareRumBuilder()
+        .globalAttributes(["customerId" : "123456"])
+        .target("<target>")
+        .serviceName("Mobile-SDK-iOS")
+        .projectName("Mobile-SDK-iOS")
+        .rumAccessToken("<account-key>")
+        .deploymentEnvironment("PROD")
+        .disableRecording()
+        .build()
+```
+
+#### Sensitive views (View will get blurred) 
+
+```swift
+
+//SwiftUI
+Text("Very important sensitive text").sensitive()
+
+// UIKit
+MiddlewareRum.addIgnoredView(view)
 ```

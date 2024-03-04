@@ -21,6 +21,7 @@ let package = Package(
         .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
         .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.3"),
+        .package(url: "https://github.com/tsolomko/SWCompression.git", .upToNextMajor(from: "4.8.5")),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -38,7 +39,8 @@ let package = Package(
                 .product(name: "SignPostIntegration", package: "opentelemetry-swift"),
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "DeviceKit", package: "DeviceKit", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst]))
+                .product(name: "DeviceKit", package: "DeviceKit", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst])),
+                .product(name: "SWCompression", package: "SWCompression"),
             ],
             path: "Sources"
         ),
