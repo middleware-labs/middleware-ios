@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tsolomko/SWCompression.git",
       "state" : {
-        "revision" : "cd39ca0a3b269173bab06f68b182b72fa690765c",
-        "version" : "4.8.5"
+        "revision" : "390e0b0af8dd19a600005a242a89e570ff482e09",
+        "version" : "4.8.6"
       }
     },
     {
