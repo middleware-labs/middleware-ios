@@ -220,8 +220,8 @@ public enum CheckState {
         defaultResource.merge(other: Resource(attributes: [
             "mw.account_key" :AttributeValue(builder.rumAccessToken!),
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
-            "browser.trace" : AttributeValue(true),
-            ResourceAttributes.browserMobile.rawValue : AttributeValue(true),
+            "browser.trace" : AttributeValue("true"),
+            ResourceAttributes.browserMobile.rawValue : AttributeValue("true"),
             ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.model),
             "project.name":AttributeValue(builder.projectName!)
         ]))
