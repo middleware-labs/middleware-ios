@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.8
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -17,7 +17,7 @@ let package = Package(
             targets: ["MiddlewareRum"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.9.1"),
+        .package(url: "https://github.com/open-telemetry/opentelemetry-swift", from: "1.9.2"),
         .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
         .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.3"),
