@@ -36,7 +36,7 @@ class SlowRenderingDetector {
         NotificationCenter.default.addObserver(self, selector: #selector(self.appResumed(notification:)), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         let displayLink = CADisplayLink(target: self, selector: #selector(displayLinkCallback))
-        displayLink.add(to: .main, forMode: .common)
+        displayLink.add(to: .main, forMode: RunLoop.Mode.common)
         self.displayLink = displayLink
         
         self.timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
