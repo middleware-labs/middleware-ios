@@ -52,7 +52,7 @@ public class LoggerBuilderSdk : LoggerBuilder {
             logger = logger.withoutTraceContext()
         }
         
-        return logger as! Logger
+        return logger as Logger
     }
     
     
