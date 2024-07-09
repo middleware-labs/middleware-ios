@@ -5,7 +5,6 @@
 
 import Foundation
 import SwiftProtobuf
-import OpenTelemetryProtocolExporterCommon
 
 public class OtlpHttpExporterBase {
   let endpoint: URL

@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import OpenTelemetryProtocolExporterCommon
 import SwiftProtobuf
 
 public class StableOtlpHTTPExporterBase {
