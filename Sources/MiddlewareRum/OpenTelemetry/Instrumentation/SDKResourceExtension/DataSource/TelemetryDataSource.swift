@@ -4,7 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetrySdk
 
 public class TelemetryDataSource: ITelemetryDataSource {
     public init() {}

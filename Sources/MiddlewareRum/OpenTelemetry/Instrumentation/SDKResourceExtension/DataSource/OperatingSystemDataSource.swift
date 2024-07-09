@@ -10,7 +10,6 @@
 #endif
 
 import Foundation
-import OpenTelemetrySdk
 
 public class OperatingSystemDataSource: IOperatingSystemDataSource {
     public init() {}

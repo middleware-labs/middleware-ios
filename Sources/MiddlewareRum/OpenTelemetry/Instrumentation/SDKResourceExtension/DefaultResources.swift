@@ -4,7 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetrySdk
 
 public class DefaultResources {
     // add new resource providers here

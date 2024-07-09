@@ -4,7 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetrySdk
 
 public class InMemoryExporter: SpanExporter {
   private var finishedSpanItems: [SpanData] = []

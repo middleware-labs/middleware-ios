@@ -4,7 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetrySdk
 
 public struct ResourceAdapter {
   public static func toProtoResource(resource: Resource) -> Opentelemetry_Proto_Resource_V1_Resource {
