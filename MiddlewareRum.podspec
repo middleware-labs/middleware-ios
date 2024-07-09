@@ -15,8 +15,9 @@ Pod::Spec.new do |spec|
   #  summary should be tweet-length, and the description more in depth.
   #
 
-  spec.name         = "middleware-ios"
-  spec.version      = "1.0.1"
+  spec.name         = "MiddlewareRum"
+  spec.version      = "1.0.3"
+  spec.swift_version = "5.9"
   spec.summary      = "Middleware iOS / MacOS / tvOS real user monitoring SDK"
 
   # This description is used to generate tags and improve search results.
@@ -68,7 +69,7 @@ Pod::Spec.new do |spec|
   # spec.platform     = :ios, "5.0"
 
   #  When using multiple platforms
-  spec.ios.deployment_target = "12.0"
+  spec.ios.deployment_target = "13.0"
   # spec.osx.deployment_target = "10.7"
   # spec.watchos.deployment_target = "2.0"
   # spec.tvos.deployment_target = "9.0"
@@ -92,7 +93,7 @@ Pod::Spec.new do |spec|
   #  Not including the public_header_files will make all headers public.
   #
 
-  spec.source_files  = "Sources", "Sources/**/*.{h,m}"
+  spec.source_files  = "Sources", "Sources/**/*.{h,m,swift}"
   spec.exclude_files = "Sources/Exclude"
 
   # spec.public_header_files = "Classes/**/*.h"
@@ -135,5 +136,10 @@ Pod::Spec.new do |spec|
 
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
   # spec.dependency "JSONKit", "~> 1.4"
-
+  spec.static_framework = true
+  spec.dependency "SwiftProtobuf", "~> 1.27.0"
+  spec.dependency "PLCrashReporter", "~> 1.11"
+  spec.dependency "DeviceKit", "~> 5.4"
+  spec.dependency "SWCompression", "~> 4.8"
+  spec.dependency "Reachability", "~> 3.7"
 end

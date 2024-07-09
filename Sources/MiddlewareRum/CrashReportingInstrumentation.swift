@@ -1,15 +1,11 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 import CrashReporter
-import Logging
 #if !os(macOS)
 import DeviceKit
 #endif
 
-private let logger = Logger(label: "io.middleware.CrashReportingInstrumentation")
 private var ogCrashReporter: PLCrashReporter?
 private var customDataDictionary: [String: String] = [String: String]()
 
@@ -21,16 +17,16 @@ class CrashReportingInstrumentation {
         let crashReporter = PLCrashReporter(configuration: configuration)
         
         if crashReporter == nil {
-            logger.error("MiddlewareRum: Failed to initialize crash reporting instrumentation.")
+            Log.error("MiddlewareRum: Failed to initialize crash reporting instrumentation.")
             return
         }
         
         guard let _ = crashReporter?.enable() else {
-            logger.error("MiddlewareRum: Failed to enable crash reporting instrumentation.")
+            Log.error("MiddlewareRum: Failed to enable crash reporting instrumentation.")
             return
         }
         ogCrashReporter = crashReporter
-        logger.info("MiddlewareRum: Enabled crash reporting instrumentation.")
+        Log.debug("MiddlewareRum: Enabled crash reporting instrumentation.")
         setSessionId()
         setDeviceStats()
         startPollingForDeviceStats()
@@ -57,7 +53,7 @@ class CrashReportingInstrumentation {
             let customData = try NSKeyedArchiver.archivedData(withRootObject: customDataDictionary, requiringSecureCoding: false)
             ogCrashReporter?.customData = customData
         } catch {
-            logger.error("MiddlewareRum: Failed to add sessionId to crash report.")
+            Log.debug("MiddlewareRum: Failed to add sessionId to crash report.")
         }
         
     }
@@ -70,7 +66,7 @@ class CrashReportingInstrumentation {
             let customData = try NSKeyedArchiver.archivedData(withRootObject: customDataDictionary, requiringSecureCoding: false)
             ogCrashReporter?.customData = customData
         } catch {
-            logger.error("MiddlewareRum: Failed to add device stats to crash report.")
+            Log.error("MiddlewareRum: Failed to add device stats to crash report.")
         }
     }
     
@@ -79,13 +75,13 @@ class CrashReportingInstrumentation {
             let data = ogCrashReporter?.loadPendingCrashReportData()
             try sendingCrashReport(data)
         } catch {
-            logger.error("MiddlewareRum: Failed to send crash report.")
+            Log.error("MiddlewareRum: Failed to send crash report.")
         }
     }
     
     
     private func sendingCrashReport(_ data: Data!) throws {
-        logger.info("MiddlewareRum: Loading crash report size \(data?.count as Any)")
+        Log.debug("MiddlewareRum: Loading crash report size \(data?.count as Any)")
         
         let report = try PLCrashReport(data: data)
         var exceptionType = report.signalInfo.name
@@ -95,8 +91,8 @@ class CrashReportingInstrumentation {
         
         let now = Date()
         let span = tracer().spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
-        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "crash")
-        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
+        span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
         if(report.customData != nil ) {
             let customData = try NSKeyedUnarchiver.unarchivedObject(ofClass: NSDictionary.self, from: report.customData) as? [String: String]
             if(customData != nil) {
@@ -112,9 +108,9 @@ class CrashReportingInstrumentation {
         span.setAttribute(key: "error", value: true)
         var exceptionAttributes = [String: AttributeValue]()
 #if !os(macOS)
-        span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
+        span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
 #else
-        span.setAttribute(key: Constants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
+        span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
 #endif
         
         exceptionAttributes["exception.type"] = AttributeValue(exceptionType ?? "unknown")

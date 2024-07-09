@@ -54,7 +54,7 @@ class MessageCollector: NSObject {
         
         imagesSending.append(images)
         
-        DebugUtils.log("Sending images \(images.name) \(images.data.count)")
+        Log.debug("Sending images \(images.name) \(images.data.count)")
         NetworkManager(target: self.target!, token: self.token!).sendImages(sessionId: getRumSessionId(), images: images.data, name: images.name) { (success) in
             self.imagesSending.removeAll { (waiting) -> Bool in
                 images.name == waiting.name

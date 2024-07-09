@@ -1,8 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
 import Foundation
-import OpenTelemetrySdk
-import OpenTelemetryApi
 
 let MAX_SESSION_AGE_SECONDS = 4 * 60 * 60
 
@@ -61,9 +59,9 @@ func getRumSessionId(forceNewSessionId: Bool = false) -> String {
 func createSessionIdChangeSpan(previousSessionId: String) {
     let now = Date()
     let tracer = OpenTelemetry.instance.tracerProvider.get(
-        instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-        instrumentationVersion: Constants.Global.VERSION_STRING)
-    let span = tracer.spanBuilder(spanName: Constants.Spans.SESSION_ID_CHANGE).setStartTime(time: now).startSpan()
-    span.setAttribute(key: Constants.Attributes.PREVIOUS_SESSION_ID, value: previousSessionId)
+        instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+        instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
+    let span = tracer.spanBuilder(spanName: MiddlewareConstants.Spans.SESSION_ID_CHANGE).setStartTime(time: now).startSpan()
+    span.setAttribute(key: MiddlewareConstants.Attributes.PREVIOUS_SESSION_ID, value: previousSessionId)
     span.end(time: now)
 }

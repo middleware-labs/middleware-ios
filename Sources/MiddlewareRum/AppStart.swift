@@ -6,8 +6,6 @@ import UIKit
 #elseif os(macOS)
 import AppKit
 #endif
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 class AppStart {
     var spanStart: Date
@@ -132,12 +130,12 @@ class AppStart {
             // swallow
         }
         
-        let tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
-        appStart = tracer.spanBuilder(spanName: Constants.Spans.APP_START).setStartTime(time: spanStart).startSpan()
-        appStart!.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
-        appStart!.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
+        let tracer = OpenTelemetry.instance.tracerProvider.get(instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME, instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
+        appStart = tracer.spanBuilder(spanName: MiddlewareConstants.Spans.APP_START).setStartTime(time: spanStart).startSpan()
+        appStart!.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "appstart")
+        appStart!.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "app_activity")
         if let procStart = procStart {
-            appStart!.addEvent(name: Constants.Events.PROCESS_START, timestamp: procStart)
+            appStart!.addEvent(name: MiddlewareConstants.Events.PROCESS_START, timestamp: procStart)
         }
         
         OpenTelemetry.instance.contextProvider.setActiveSpan(appStart!)

@@ -28,13 +28,13 @@ class NetworkManager: NSObject {
                  onError: @escaping (Error?) -> Void) {
     
         let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            DebugUtils.log(">>>\(request.httpMethod ?? ""):\(request.url?.absoluteString ?? "")\n<<<\(String(data: data ?? Data(), encoding: .utf8) ?? "")")
+            Log.debug(">>>\(request.httpMethod ?? ""):\(request.url?.absoluteString ?? "")\n<<<\(String(data: data ?? Data(), encoding: .utf8) ?? "")")
             
             DispatchQueue.main.async {
                 guard let data = data,
                       let httpResponse = response as? HTTPURLResponse,
                       (200...299).contains(httpResponse.statusCode) else {
-                    DebugUtils.error(">>>>>> Error in call \(request.url?.absoluteString ?? "") : \(error?.localizedDescription ?? "N/A")")
+                    Log.error(">>>>>> Error in call \(request.url?.absoluteString ?? "") : \(error?.localizedDescription ?? "N/A")")
                     onError(error)
                     return
                 }
@@ -70,7 +70,7 @@ class NetworkManager: NSObject {
         body.appendString("\r\n")
 
         body.appendString("--\(boundary)--\r\n")
-        DebugUtils.log(">>>>>> sending \(body.count) bytes")
+        Log.debug(">>>>>> sending \(body.count) bytes")
         request.httpBody = body
 
         callAPI(request: request) { (data) in
