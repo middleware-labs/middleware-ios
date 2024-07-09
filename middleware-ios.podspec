@@ -15,7 +15,7 @@ Pod::Spec.new do |spec|
   #  summary should be tweet-length, and the description more in depth.
   #
 
-  spec.name         = "middleware-ios"
+  spec.name         = "MiddlewareRum"
   spec.version      = "1.0.1"
   spec.summary      = "Middleware iOS / MacOS / tvOS real user monitoring SDK"
 
@@ -92,7 +92,7 @@ Pod::Spec.new do |spec|
   #  Not including the public_header_files will make all headers public.
   #
 
-  spec.source_files  = "Sources", "Sources/**/*.{h,m}"
+  spec.source_files  = "Sources", "Sources/**/*.{h,m,swift}"
   spec.exclude_files = "Sources/Exclude"
 
   # spec.public_header_files = "Classes/**/*.h"
@@ -135,5 +135,6 @@ Pod::Spec.new do |spec|
 
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
   # spec.dependency "JSONKit", "~> 1.4"
+  spec.static_framework = true
 
 end
