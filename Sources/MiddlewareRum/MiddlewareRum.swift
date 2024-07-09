@@ -86,7 +86,7 @@ public enum CheckState {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             _ = SlowRenderingDetector(configuration: SlowRenderingConfiguration(slowFrameThreshold: builder.slowFrameDetectionThresholdMs, frozenFrameThreshold: builder.frozenFrameDetectionThresholdMs))
 #elseif os(macOS)
-            logger.info("Slow rendering is not supported in macOS")
+            Log.debug("Slow rendering is not supported in macOS")
 #endif
         }
         
@@ -107,7 +107,7 @@ public enum CheckState {
             let uiInstrumentation = UIInstrumentation()
             uiInstrumentation.start()
 #elseif os(macOS)
-            logger.info("UI instrumentation is supported only in iOS")
+            Log.debug("UI instrumentation is supported only in iOS")
 #endif
         }
         
