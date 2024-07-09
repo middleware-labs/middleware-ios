@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 public struct SpanAdapter {
   public static func toProtoResourceSpans(spanDataList: [SpanData]) -> [Opentelemetry_Proto_Trace_V1_ResourceSpans] {

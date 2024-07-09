@@ -7,8 +7,6 @@
 
 import Foundation
 import os
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 /// A span processor that decorates spans with the origin attribute
 @available(macOS 10.14, iOS 12.0, tvOS 12.0, *)

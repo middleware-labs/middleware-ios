@@ -4,7 +4,6 @@
 // 
 
 import Foundation
-import OpenTelemetryApi
 
 public class LoggerProviderSdk : LoggerProvider {
     private var sharedState: LoggerSharedState

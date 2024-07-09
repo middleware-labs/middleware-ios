@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 import SwiftProtobuf
 
 struct TraceProtoUtils {

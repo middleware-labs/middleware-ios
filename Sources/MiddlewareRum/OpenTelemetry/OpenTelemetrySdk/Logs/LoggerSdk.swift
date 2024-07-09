@@ -4,7 +4,6 @@
 // 
 
 import Foundation
-import OpenTelemetryApi
 import os.log
 
 public class LoggerSdk : Logger {

@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 public class ResourceProvider {
     public var attributes: [String: AttributeValue] {

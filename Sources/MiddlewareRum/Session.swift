@@ -1,8 +1,6 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 
 import Foundation
-import OpenTelemetrySdk
-import OpenTelemetryApi
 
 let MAX_SESSION_AGE_SECONDS = 4 * 60 * 60
 

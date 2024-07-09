@@ -4,7 +4,6 @@
 // 
 
 import Foundation
-import OpenTelemetryApi
 
 public struct Headers {
   // GetUserAgentHeader returns an OTLP header value of the form "OTel OTLP Exporter Swift/{{ .Version }}"

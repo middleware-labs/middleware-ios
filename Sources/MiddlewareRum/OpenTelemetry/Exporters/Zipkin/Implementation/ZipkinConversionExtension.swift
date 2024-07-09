@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 struct ZipkinConversionExtension {
     static let statusCode = "otel.status_code"

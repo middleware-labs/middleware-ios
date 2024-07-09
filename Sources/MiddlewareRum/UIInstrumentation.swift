@@ -2,8 +2,6 @@
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 import UIKit
 extension UIApplication {
     @objc open func abracadabra_sendAction(_ action: Selector,

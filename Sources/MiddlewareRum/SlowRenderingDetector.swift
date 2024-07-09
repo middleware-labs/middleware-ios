@@ -4,9 +4,6 @@
 import Foundation
 import UIKit
 
-import OpenTelemetrySdk
-import OpenTelemetryApi
-
 @available(macOS 14.0, *)
 class SlowRenderingDetector {
     

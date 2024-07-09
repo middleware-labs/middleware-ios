@@ -4,7 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
 
 /// Struct to access a set of pre-defined Samplers.
 public enum Samplers {

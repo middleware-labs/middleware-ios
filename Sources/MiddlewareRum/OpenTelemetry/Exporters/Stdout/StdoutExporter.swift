@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 public class StdoutExporter: SpanExporter {
     let isDebug: Bool

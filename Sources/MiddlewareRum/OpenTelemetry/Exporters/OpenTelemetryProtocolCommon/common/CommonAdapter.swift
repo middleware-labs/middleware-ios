@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 public struct CommonAdapter {
   public static func toProtoAttribute(key: String, attributeValue: AttributeValue)

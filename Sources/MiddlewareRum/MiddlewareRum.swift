@@ -1,14 +1,5 @@
 // Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
 import Foundation
-import OpenTelemetrySdk
-import OpenTelemetryApi
-import OpenTelemetryProtocolExporterCommon
-import OpenTelemetryProtocolExporterHttp
-import StdoutExporter
-import URLSessionInstrumentation
-import NetworkStatus
-import SignPostIntegration
-import ResourceExtension
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
 import WebKit
 #endif

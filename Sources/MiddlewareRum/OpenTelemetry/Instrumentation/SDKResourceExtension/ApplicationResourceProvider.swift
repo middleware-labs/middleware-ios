@@ -4,8 +4,6 @@
  */
 
 import Foundation
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 public class ApplicationResourceProvider: ResourceProvider {
     let applicationDataSource: IApplicationDataSource

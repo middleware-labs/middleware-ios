@@ -6,8 +6,6 @@ import UIKit
 #elseif os(macOS)
 import AppKit
 #endif
-import OpenTelemetryApi
-import OpenTelemetrySdk
 
 class AppStart {
     var spanStart: Date
