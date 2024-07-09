@@ -13,21 +13,21 @@ extension UIApplication {
         setUIFields()
         let uiSpan = tracer()
             .spanBuilder(spanName: action.description).startSpan()
-        uiSpan.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
-        uiSpan.setAttribute(key: Constants.Attributes.ACTION_NAME, value: action.description)
+        uiSpan.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "ui")
+        uiSpan.setAttribute(key: MiddlewareConstants.Attributes.ACTION_NAME, value: action.description)
         OpenTelemetry.instance.contextProvider.setActiveSpan(uiSpan)
         defer {
             OpenTelemetry.instance.contextProvider.removeContextForSpan(uiSpan)
             uiSpan.end()
         }
         if(target != nil) {
-            uiSpan.setAttribute(key: Constants.Attributes.TARGET_TYPE, value: AttributeValue(String(describing: type(of: target!))))
+            uiSpan.setAttribute(key: MiddlewareConstants.Attributes.TARGET_TYPE, value: AttributeValue(String(describing: type(of: target!))))
         }
         if sender != nil {
-            uiSpan.setAttribute(key: Constants.Attributes.SENDER_TYPE, value: String(describing: type(of: sender!)))
+            uiSpan.setAttribute(key: MiddlewareConstants.Attributes.SENDER_TYPE, value: String(describing: type(of: sender!)))
         }
         if event != nil {
-            uiSpan.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: String(describing: type(of: event!)))
+            uiSpan.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: String(describing: type(of: event!)))
         }
         return abracadabra_sendAction(action, to: target, from: sender, for: event)
     }
@@ -66,9 +66,9 @@ class NotificationPairInstrumenter {
             let notifObj = notif.object as? NSObject
             if notifObj != nil {
                 let span = tracer().spanBuilder(spanName: self.spanName).startSpan()
-                span.setAttribute(key: Constants.Attributes.LAST_SCREEN_NAME, value: getScreenName())
-                span.setAttribute(key: Constants.Attributes.COMPONENT, value: "ui")
-                span.setAttribute(key: Constants.Attributes.OBJECT_TYPE, value: String(describing: type(of: notif.object!)))
+                span.setAttribute(key: MiddlewareConstants.Attributes.LAST_SCREEN_NAME, value: getScreenName())
+                span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "ui")
+                span.setAttribute(key: MiddlewareConstants.Attributes.OBJECT_TYPE, value: String(describing: type(of: notif.object!)))
                 self.obj2Span.setObject(SpanHolder(span), forKey: notifObj)
             }
             
@@ -80,7 +80,7 @@ class NotificationPairInstrumenter {
                 let spanHolder = self.obj2Span.object(forKey: notifObj)
                 if spanHolder != nil {
                     
-                    spanHolder?.span.setAttribute(key: Constants.Attributes.SCREEN_NAME, value: getScreenName())
+                    spanHolder?.span.setAttribute(key: MiddlewareConstants.Attributes.SCREEN_NAME, value: getScreenName())
                     spanHolder?.span.end()
                 }
             }
@@ -159,7 +159,7 @@ func abracadabra(clazz: AnyClass, orig: Selector, swoosh: Selector) {
 let PresentationTransitionInstrumenter = NotificationPairInstrumenter(
     begin: "UIPresentationControllerPresentationTransitionWillBeginNotification",
     end: "UIPresentationControllerPresentationTransitionDidEndNotification",
-    spanName: Constants.Spans.PRESENTATION_TRANSITION)
+    spanName: MiddlewareConstants.Spans.PRESENTATION_TRANSITION)
 
 func initializePresentationTransitionInstrumentation() {
     PresentationTransitionInstrumenter.start()
@@ -172,7 +172,7 @@ func initializePresentationTransitionInstrumentation() {
 let ShowVCInstrumenter = NotificationPairInstrumenter(
     begin: "UINavigationControllerWillShowViewControllerNotification",
     end: "UINavigationControllerDidShowViewControllerNotification",
-    spanName: Constants.Spans.SHOW_VC)
+    spanName: MiddlewareConstants.Spans.SHOW_VC)
 
 func initializeShowVCInstrumentation() {
     ShowVCInstrumenter.start()

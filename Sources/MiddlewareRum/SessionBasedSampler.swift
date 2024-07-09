@@ -29,7 +29,8 @@ class SessionBasedSampler: Sampler {
             }
         }
     }
-    func shouldSample(parentContext: OpenTelemetryApi.SpanContext?, traceId: OpenTelemetryApi.TraceId, name: String, kind: OpenTelemetryApi.SpanKind, attributes: [String : OpenTelemetryApi.AttributeValue], parentLinks: [OpenTelemetrySdk.SpanData.Link]) -> OpenTelemetrySdk.Decision {
+
+    func shouldSample(parentContext: SpanContext?, traceId: TraceId, name: String, kind: SpanKind, attributes: [String : AttributeValue], parentLinks: [SpanData.Link]) -> Decision {
         return lock.withLock({
             return self.getDecision()
         })

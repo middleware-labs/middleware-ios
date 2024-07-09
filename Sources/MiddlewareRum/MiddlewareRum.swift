@@ -16,7 +16,6 @@ import WebKit
 #if os(ios) || targetEnvironment(macCatalyst)
 import UIKit
 #endif
-import Logging
 
 var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
@@ -29,9 +28,7 @@ public enum CheckState {
 }
 
 @objc public class MiddlewareRum: NSObject {
-    
-    static let logger: Logging.Logger = Logging.Logger(label: "MiddlewareLogger")
-    
+        
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
         
@@ -59,29 +56,6 @@ public enum CheckState {
             ]).build()
         )
         
-        
-        let otlpMetricExporter = OtlpHttpMetricExporter(
-            endpoint: URL(string: builder.target! + "/v1/metrics")!,
-            config: OtlpConfiguration(timeout: TimeInterval(10000),
-                                      headers: [
-                                        ("Origin", "sdk.middleware.io"),
-                                        ("Access-Control-Allow-Headers", "*")
-                                      ]
-                                     )
-        )
-        
-        OpenTelemetry.registerMeterProvider(meterProvider: MeterProviderBuilder()
-            .with(exporter: otlpMetricExporter)
-            .with(resource: createMiddlewareResource(builder: builder))
-            .with(processor: MetricProcessorSdk())
-            .with(pushInterval: 60)
-            .build())
-        
-        OpenTelemetry.instance
-            .meterProvider.get(instrumentationName: Constants.Global.INSTRUMENTATION_NAME, instrumentationVersion: Constants.Global.VERSION_STRING)
-            .createIntCounter(name: "user.status")
-            .add(value: 1, labels: ["description" : "User Status", "valueType": "1", "unit": ""])
-        
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
             config:  OtlpConfiguration(timeout: TimeInterval(10000),
@@ -98,16 +72,16 @@ public enum CheckState {
             .build())
         
         let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: Constants.Global.VERSION_STRING)
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         
         AppStart(spanStart: middlewareRumInitTime).sendAppStartSpan()
         let mwInit = tracer
             .spanBuilder(spanName: "Middleware.initialize")
             .setStartTime(time: middlewareRumInitTime)
             .startSpan()
-        mwInit.setAttribute(key: Constants.Attributes.COMPONENT, value: "appstart")
-        mwInit.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "app_activity")
+        mwInit.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "appstart")
+        mwInit.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "app_activity")
         setGlobalAttributes(builder.globalAttributes!)
         if(builder.deploymentEnvironment != nil) {
             setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
@@ -244,8 +218,8 @@ public enum CheckState {
                 return true
             },
             spanCustomization: { URLRequest, spanBuilder in
-                spanBuilder.setAttribute(key: Constants.Attributes.COMPONENT, value: "http")
-                spanBuilder.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "fetch")
+                spanBuilder.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "http")
+                spanBuilder.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "fetch")
             },
             receivedError: { (error: Error, _: DataOrFile?, status: HTTPStatus, span: Span) in
                 span.addEvent(name: "error", attributes: ["description" : AttributeValue(error.localizedDescription)])
@@ -269,8 +243,8 @@ public enum CheckState {
     ///   - attributes: Attach attributes to span
     @objc public class func addEvent(name: String, attributes: NSDictionary) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: Constants.Global.VERSION_STRING)
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         let now = Date()
         let span = tracer.spanBuilder(spanName: name)
         for attribute in attributes {
@@ -292,7 +266,7 @@ public enum CheckState {
     /// - Parameter name: <#name description#>
     @objc public class func setScreenName(_ name: String) {
         if !Thread.current.isMainThread {
-            logger.info("MiddlewareRum.setScreenName is not called from main thread: \(Thread.current.debugDescription)")
+            Log.debug("MiddlewareRum.setScreenName is not called from main thread: \(Thread.current.debugDescription)")
             return
         }
         setScreenNameInternal(name, true)
@@ -312,21 +286,21 @@ public enum CheckState {
     /// - Parameter e: NSException associated with this event.
     @objc  public class func addException(e: NSException) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: Constants.Global.VERSION_STRING)
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         let now = Date()
         let typeName = e.name.rawValue
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
-        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
-        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
-        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: typeName)
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: typeName)
         if e.reason != nil {
-            span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e.reason!)
+            span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_MESSAGE, value: e.reason!)
         }
         let stack = e.callStackSymbols.joined(separator: "\n")
         if !stack.isEmpty {
-            span.setAttribute(key: Constants.Attributes.EXCEPTION_STACKTRACE, value: stack)
+            span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_STACKTRACE, value: stack)
         }
         span.addEvent(name: "exception")
         span.end(time: now)
@@ -338,16 +312,16 @@ public enum CheckState {
     /// - Parameter e: Error associated with this event.
     @objc public class func addError(e: Error) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: Constants.Global.VERSION_STRING)
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         let now = Date()
         let typeName = String(describing: type(of: e))
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
-        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
-        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
-        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: typeName)
-        span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e.localizedDescription)
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: typeName)
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_MESSAGE, value: e.localizedDescription)
         span.end(time: now)
     }
     
@@ -357,16 +331,16 @@ public enum CheckState {
     /// - Parameter e: String associated with this event.
     @objc public class func addError(_ e: String) {
         let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: Constants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: Constants.Global.VERSION_STRING)
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         let now = Date()
         let typeName = "MiddlewareRum.addError(String)"
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: Constants.Attributes.COMPONENT, value: "error")
-        span.setAttribute(key: Constants.Attributes.EVENT_TYPE, value: "error")
-        span.setAttribute(key: Constants.Attributes.ERROR, value: true)
-        span.setAttribute(key: Constants.Attributes.EXCEPTION_TYPE, value: "String")
-        span.setAttribute(key: Constants.Attributes.EXCEPTION_MESSAGE, value: e)
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: "String")
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_MESSAGE, value: e)
         span.end(time: now)
     }
     
@@ -381,8 +355,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional dditional information with log
-    public class func trace(_ message: Logging.Logger.Message, _ metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.trace(message, metadata: metadata ?? [:])
+    public class func trace(_ message: String, _ metadata: [String: String]? = nil) {
+        Log.trace(message)
         MiddlewareRum.log(message: message, severity: .trace, metadata: metadata ?? [:])
     }
     
@@ -390,8 +364,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func info(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.info(message, metadata: metadata ?? [:])
+    public class func info(_ message: String, metadata: [String: String]? = nil) {
+        Log.debug(message)
         MiddlewareRum.log(message: message, severity: .info, metadata: metadata ?? [:])
     }
     
@@ -399,8 +373,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func error(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.error(message, metadata: metadata ?? [:])
+    public class func error(_ message: String, metadata: [String: String]? = nil) {
+        Log.error(message)
         MiddlewareRum.log(message: message, severity: .error, metadata: metadata ?? [:])
     }
     
@@ -408,8 +382,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func debug(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.debug(message, metadata: metadata ?? [:])
+    public class func debug(_ message: String, metadata: [String: String]? = nil) {
+        Log.debug(message)
         MiddlewareRum.log(message: message, severity: .debug, metadata: metadata ?? [:])
     }
     
@@ -417,8 +391,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func warning(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.warning(message, metadata: metadata ?? [:])
+    public class func warning(_ message: String, metadata: [String: String]? = nil) {
+        Log.warning(message)
         MiddlewareRum.log(message: message, severity: .warn, metadata: metadata ?? [:])
     }
     
@@ -426,8 +400,8 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func crtical(_ message: Logging.Logger.Message, metadata: [String: Logging.Logger.MetadataValue]? = nil) {
-        logger.critical(message, metadata: metadata ?? [:])
+    public class func crtical(_ message: String, metadata: [String: String]? = nil) {
+        Log.error(message)
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
     }
 
@@ -445,16 +419,16 @@ public enum CheckState {
     }
 #endif
 
-    private class func log(message: Logging.Logger.Message, severity: Severity, metadata: [String: Logging.Logger.MetadataValue]) {
+    private class func log(message: String, severity: Severity, metadata: [String: String]) {
         var attribute: [String: AttributeValue] = [:]
         for (name, value) in metadata {
-            attribute[name] = AttributeValue(value.description)
+            attribute[name] = AttributeValue(value)
         }
         OpenTelemetry.instance.loggerProvider
-            .get(instrumentationScopeName: Constants.Global.INSTRUMENTATION_NAME)
+            .get(instrumentationScopeName: MiddlewareConstants.Global.INSTRUMENTATION_NAME)
             .logRecordBuilder()
             .setSeverity(severity)
-            .setBody(AttributeValue(message.description))
+            .setBody(AttributeValue(message))
             .setAttributes(attribute)
             .emit()
     }

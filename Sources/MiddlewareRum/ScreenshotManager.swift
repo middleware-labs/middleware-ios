@@ -69,14 +69,14 @@ open class ScreenshotManager {
 
     public func addSanitizedElement(_ element: Sanitizable) {
         #if DEBUG
-        DebugUtils.log("addSanitizedElement")
+        Log.debug("addSanitizedElement")
         #endif
         sanitizedElements.append(element)
     }
 
     public func removeSanitizedElement(_ element: Sanitizable) {
         #if DEBUG
-        DebugUtils.log("removeSanitizedElement")
+        Log.debug("removeSanitizedElement")
         #endif
         sanitizedElements.removeAll { $0 as AnyObject === element as AnyObject }
     }
@@ -197,7 +197,7 @@ open class ScreenshotManager {
                 let gzData = try GzipArchive.archive(data: TarContainer.create(from: entries))
                 MessageCollector(target: self.target!, token: self.token!).sendImagesBatch(batch: gzData, fileName: archiveName)
             } catch {
-                DebugUtils.log("Error writing tar.gz data: \(error)")
+                Log.error("Error writing tar.gz data: \(error)")
             }
         }
         screenshots.removeAll()
