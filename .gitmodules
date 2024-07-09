@@ -1,6 +1,0 @@
-[submodule "Sources/MiddlewareRum/OpenTelemetry/opentelemetry-swift"]
-	path = Sources/MiddlewareRum/OpenTelemetry/opentelemetry-swift
-	url = https://github.com/open-telemetry/opentelemetry-swift.git
-[submodule "Sources/MiddlewareRum/opentelemetry-swift"]
-	path = Sources/MiddlewareRum/opentelemetry-swift
-	url = https://github.com/open-telemetry/opentelemetry-swift.git
