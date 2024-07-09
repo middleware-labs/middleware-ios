@@ -24,7 +24,7 @@ public class LoggerProviderSdk : LoggerProvider {
     }
     
     public func get(instrumentationScopeName: String) -> Logger {
-        return loggerRegistry.get(name: instrumentationScopeName, version: nil, schemaUrl: nil) as! Logger
+        return loggerRegistry.get(name: instrumentationScopeName, version: nil, schemaUrl: nil) as Logger
     }
     
     public func loggerBuilder(instrumentationScopeName: String) -> LoggerBuilder {

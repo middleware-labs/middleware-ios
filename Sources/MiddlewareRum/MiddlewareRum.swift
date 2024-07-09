@@ -4,7 +4,7 @@ import Foundation
 import WebKit
 #endif
 
-#if os(ios) || targetEnvironment(macCatalyst)
+#if os(iOS) || targetEnvironment(macCatalyst)
 import UIKit
 #endif
 
