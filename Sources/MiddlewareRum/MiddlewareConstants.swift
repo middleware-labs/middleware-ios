@@ -40,6 +40,7 @@ enum MiddlewareConstants {
         static let HTTP_STATUS_CODE = "http.status_code"
         static let HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSESD = "http.response_content_length_uncompressed"
         static let HTTP_REQUEST_CONTENT_LENGTH = "http.request_content_length"
+        static let MW_AGENT = "mw_agent"
         static let NET_HOST_CONNECTION_TYPE = "net.host.connection.type"
         static let NET_HOST_CONNECTION_SUBTYPE = "net.host.connection.subtype"
         static let NET_HOST_CARRIER_NAME = "net.host.carrier.name"
