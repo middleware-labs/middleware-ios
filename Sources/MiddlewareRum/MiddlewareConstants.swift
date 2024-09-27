@@ -12,7 +12,8 @@ enum MiddlewareConstants {
     enum Attributes {
         static let APP = "app"
         static let APP_VERSION = "app.version"
-        static let RUM_SDK_VERSION = "rum.sdk.version"
+        static let BROWSER_TRACE = "browser.trace"
+        static let RUM_SDK_VERSION = "mw.rum.sdk.version"
         static let DEVICE_MODEL_NAME = "device.model.name"
         static let ERROR = "error"
         static let COUNT = "count"
