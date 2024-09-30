@@ -33,7 +33,7 @@ class GlobalAttributesProcessor: SpanProcessor {
     
     func onStart(parentContext: SpanContext?, span: ReadableSpan) {
         span.setAttribute(key: MiddlewareConstants.Attributes.BROWSER_TRACE, value: "true")
-        span.setAttribute(key: MiddlewareConstants.Attributes.MW_AGENT, value: "true")
+        span.setAttribute(key: MiddlewareConstants.Attributes.MW_RUM, value: "true")
         span.setAttribute(key: MiddlewareConstants.Attributes.APP, value: appName)
         if appVersion != nil {
             span.setAttribute(key: MiddlewareConstants.Attributes.APP_VERSION, value: appVersion!)
