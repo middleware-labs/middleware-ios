@@ -14,10 +14,10 @@ struct MiddlewareAppApp: App {
     init() {
         MiddlewareRumBuilder()
             .globalAttributes(["some" : "value"])
-                .target("<target>")
-            .serviceName("Mobile-SDK-Android")
-            .projectName("Mobile-SDK-Android")
-                .rumAccessToken("<rum-token>")
+            .target("https://p2i13hg.middleware.io")
+              .serviceName("middleware-ios")
+              .projectName("middleware-ios")
+              .rumAccessToken("htfxwzzwtwcifogcmmpuqhrxudcknjimyfbb")
             .deploymentEnvironment("PROD")
             .build()
     }
