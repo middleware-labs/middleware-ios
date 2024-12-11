@@ -40,6 +40,7 @@ let package = Package(
             dependencies: [
                 "MiddlewareRum",
                 .product(name: "CrashReporter", package: "PLCrashReporter"),
+                .product(name: "SwiftProtobuf", package: "swift-protobuf"),
             ]),
     ]
 )
