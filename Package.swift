@@ -28,7 +28,7 @@ let package = Package(
         .target(
             name: "MiddlewareRum",
             dependencies: [
-                .product(name: "CrashReporter", package: "PLCrashReporter"),
+                .product(name: "CrashReporter", package: "PLCrashReporter",condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst])),
                 .product(name: "DeviceKit", package: "DeviceKit", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst])),
                 .product(name: "SWCompression", package: "SWCompression"),
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
