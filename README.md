@@ -31,13 +31,13 @@
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "1.0.4"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "1.0.5"),
 ```
 
 ## Using Cocoapods
 
 ```ruby
-pod "MiddlewareRum", "~> 1.0.4"
+pod "MiddlewareRum", "~> 1.0.5"
 ```
 
 ## Initialization of Middleware iOS sdk

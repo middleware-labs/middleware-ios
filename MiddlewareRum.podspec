@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "MiddlewareRum"
-  spec.version      = "1.0.4"
+  spec.version      = "1.0.5"
   spec.swift_version = "5.9"
   spec.summary      = "Middleware iOS / MacOS / tvOS real user monitoring SDK"
 
