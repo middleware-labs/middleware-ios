@@ -52,15 +52,19 @@ func getRumSessionId(forceNewSessionId: Bool = false) -> String {
         callback()
     }
     if isSessionIdChanged {
-        createSessionIdChangeSpan(previousSessionId: oldRumSessionId)
+        createSessionIdChangeSpan(newSessionId: rumSessionId, previousSessionId: oldRumSessionId)
     }
     return rumSessionId
 }
-func createSessionIdChangeSpan(previousSessionId: String) {
+func createSessionIdChangeSpan(newSessionId: String, previousSessionId: String) {
     let now = Date()
     let tracer = OpenTelemetry.instance.tracerProvider.get(
         instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
         instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
+    var activeResource = OpenTelemetry.instance.tracerProvider.getActiveResource()
+    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_ID] = AttributeValue(newSessionId)
+    OpenTelemetry.instance.tracerProvider.updateActiveResource(activeResource)
+
     let span = tracer.spanBuilder(spanName: MiddlewareConstants.Spans.SESSION_ID_CHANGE).setStartTime(time: now).startSpan()
     span.setAttribute(key: MiddlewareConstants.Attributes.PREVIOUS_SESSION_ID, value: previousSessionId)
     span.end(time: now)

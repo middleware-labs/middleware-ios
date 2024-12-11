@@ -35,8 +35,7 @@ public enum CheckState {
                                       ]
                                      )
         )
-        
-        OpenTelemetry.registerTracerProvider(tracerProvider: TracerProviderBuilder()
+        let provider = TracerProviderBuilder()
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
             .with(resource: createMiddlewareResource(builder: builder))
             .add(spanProcessors: [
@@ -45,7 +44,7 @@ public enum CheckState {
                 BatchSpanProcessor(spanExporter: otlpTraceExporter),
                 SimpleSpanProcessor(spanExporter: StdoutExporter())
             ]).build()
-        )
+        OpenTelemetry.registerTracerProvider(tracerProvider: provider)
         
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
@@ -186,9 +185,10 @@ public enum CheckState {
             "mw.account_key" :AttributeValue(builder.rumAccessToken!),
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
             "browser.trace" : AttributeValue("true"),
-            ResourceAttributes.browserMobile.rawValue : AttributeValue("true"),
+            "mw.rum" : AttributeValue("true"),
             ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.model),
-            "project.name":AttributeValue(builder.projectName!)
+            "project.name":AttributeValue(builder.projectName!),
+            "session.id": AttributeValue(getSessionId())
         ]))
         return defaultResource
     }
