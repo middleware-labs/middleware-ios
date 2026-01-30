@@ -17,10 +17,10 @@ let package = Package(
             targets: ["MiddlewareRum"]),
     ],
     dependencies: [
-        .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
+        .package(url: "https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
         .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
         .package(url: "https://github.com/tsolomko/SWCompression.git", .upToNextMajor(from: "4.8.5")),
-        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.27.0")
+        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.27.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -39,7 +39,7 @@ let package = Package(
             name: "MiddlewareRumTests",
             dependencies: [
                 "MiddlewareRum",
-                .product(name: "CrashReporter", package: "PLCrashReporter"),
+                .product(name: "CrashReporter", package: "PLCrashReporter")
             ]),
     ]
 )

@@ -90,22 +90,23 @@ class CrashReportingInstrumentation {
         }
         
         let now = Date()
-        let span = tracer().spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
+        
+        let span = tracer().spanBuilder(spanName: exceptionType!).setStartTime(time: now).startSpan()
         span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
+        
         if(report.customData != nil ) {
             let customData = try NSKeyedUnarchiver.unarchivedObject(ofClass: NSDictionary.self, from: report.customData) as? [String: String]
             if(customData != nil) {
-                span.setAttribute(key: "crash.rumSessionId", value: customData!["sessionId"]!)
-                span.setAttribute(key: "crash.batteryLevel", value: customData!["batteryLevel"]!)
-                span.setAttribute(key: "crash.freeDiskSpace", value: customData!["freeDiskSpace"]!)
-                span.setAttribute(key: "crash.freeMemory", value: customData!["freeMemory"]!)
+                span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_SESSION_ID, value: customData!["sessionId"]!)
+                span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_BATTERY_LEVEL, value: customData!["batteryLevel"]!)
+                span.setAttribute(key:  MiddlewareConstants.Attributes.CRASH_FREE_DISK_SPACE, value: customData!["freeDiskSpace"]!)
+                span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_FREE_MEMORY, value: customData!["freeMemory"]!)
             } else {
-                span.setAttribute(key: "crash.rumSessionId", value: String(decoding: report.customData, as: UTF8.self))
+                span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_SESSION_ID, value: String(decoding: report.customData, as: UTF8.self))
             }
         }
-        span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
-        span.setAttribute(key: "error", value: true)
+        span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_APP_VERSION, value: report.applicationInfo.applicationMarketingVersion)
         var exceptionAttributes = [String: AttributeValue]()
 #if !os(macOS)
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
@@ -113,21 +114,25 @@ class CrashReportingInstrumentation {
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
 #endif
         
-        exceptionAttributes["exception.type"] = AttributeValue(exceptionType ?? "unknown")
-        span.setAttribute(key: "crash.address", value: report.signalInfo.address.description)
+        exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_TYPE] = AttributeValue(exceptionType!)
+        span.setAttribute(key: MiddlewareConstants.Attributes.CRASH_ADDRESS, value: report.signalInfo.address.description)
         for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
-            exceptionAttributes["exception.stacktrace"] = AttributeValue(crashedThreadToStack(report: report, thread: thread))
+            exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_STACKTRACE] = AttributeValue(crashedThreadToStack(report: report, thread: thread))
+            exceptionAttributes[MiddlewareConstants.Attributes.ERROR_STACK] = exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_STACKTRACE]
             break
         }
         if report.hasExceptionInfo {
             if(report.exceptionInfo.exceptionName != nil) {
-                exceptionAttributes["exception.type"] = AttributeValue(report.exceptionInfo.exceptionName as Any)
+                exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_TYPE] = AttributeValue(report.exceptionInfo.exceptionName as Any)
             }
             if(report.exceptionInfo.exceptionReason != nil) {
-                exceptionAttributes["exception.message"] = AttributeValue(report.exceptionInfo.exceptionReason as Any)
+                exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_MESSAGE] = AttributeValue(report.exceptionInfo.exceptionReason as Any)
+                exceptionAttributes[MiddlewareConstants.Attributes.ERROR_MESSAGE] = exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_MESSAGE]
             }
         }
-        span.addEvent(name: "crash.timestamp", attributes: exceptionAttributes, timestamp: report.systemInfo.timestamp)
+        exceptionAttributes[MiddlewareConstants.Attributes.ERROR_TYPE] = exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_TYPE]
+
+        span.addEvent(name: MiddlewareConstants.Attributes.CRASH_TIMESTAMP, attributes: exceptionAttributes, timestamp: report.systemInfo.timestamp)
         span.end(time: now)
     }
     

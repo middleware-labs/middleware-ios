@@ -182,13 +182,14 @@ public enum CheckState {
     class func createMiddlewareResource(builder: MiddlewareRumBuilder) -> Resource {
         var defaultResource = DefaultResources().get()
         defaultResource.merge(other: Resource(attributes: [
-            "mw.account_key" :AttributeValue(builder.rumAccessToken!),
+            MiddlewareConstants.Global.ACCOUNT_KEY: AttributeValue(builder.rumAccessToken!),
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
-            "browser.trace" : AttributeValue("true"),
-            "mw.rum" : AttributeValue("true"),
+            MiddlewareConstants.Global.MW_RUM : AttributeValue("true"),
+            MiddlewareConstants.Attributes.OS: AttributeValue("iOS"),
             ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.model),
-            "project.name":AttributeValue(builder.projectName!),
-            "session.id": AttributeValue(getSessionId())
+            MiddlewareConstants.Global.PROJECT_NAME: AttributeValue(builder.projectName!),
+            MiddlewareConstants.Attributes.SESSION_ID: AttributeValue(getSessionId()),
+            MiddlewareConstants.Attributes.SESSION_START_TIME: AttributeValue(getSessionStartTime()),
         ]))
         return defaultResource
     }
@@ -282,7 +283,7 @@ public enum CheckState {
         let now = Date()
         let typeName = e.name.rawValue
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
         span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
         span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: typeName)
@@ -308,7 +309,7 @@ public enum CheckState {
         let now = Date()
         let typeName = String(describing: type(of: e))
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
         span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
         span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: typeName)
@@ -327,7 +328,7 @@ public enum CheckState {
         let now = Date()
         let typeName = "MiddlewareRum.addError(String)"
         let span = tracer.spanBuilder(spanName: typeName).setStartTime(time: now).startSpan()
-        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "error")
+        span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
         span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
         span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: "String")
