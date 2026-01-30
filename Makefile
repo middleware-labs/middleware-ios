@@ -2,7 +2,7 @@ PROJECT_NAME = "middleware-ios"
 
 XCODEBUILD_OPTIONS_IOS = \
 	-configuration Debug \
-	-destination platform='iOS Simulator,name=iPhone 14,OS=latest' \
+	-destination platform='iOS Simulator,name=iPhone 16,OS=latest' \
 	-scheme $(PROJECT_NAME) \
 	-workspace .
 
@@ -14,7 +14,7 @@ XCODEBUILD_OPTIONS_TVOS = \
 
 XCODEBUILD_OPTIONS_WATCHOS = \
 	-configuration Debug \
-	-destination platform='watchOS Simulator,name=Apple Watch Series 8 (45mm),OS=latest' \
+	-destination platform='watchOS Simulator,name=Apple Watch Series 10 (46mm),OS=latest' \
 	-scheme $(PROJECT_NAME) \
 	-workspace .
 
@@ -32,7 +32,7 @@ build-tvos:
 
 .PHONY: build-watchos
 build-watchos:
-	set -o pipefail && xcodebuild $(XCODEBUILD_OPTIONS_IOS) build | xcbeautify
+	set -o pipefail && xcodebuild $(XCODEBUILD_OPTIONS_WATCHOS) build | xcbeautify
 
 .PHONY: build-for-testing-ios
 build-for-testing-ios:

@@ -17,11 +17,10 @@ let package = Package(
             targets: ["MiddlewareRum"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/microsoft/plcrashreporter", .upToNextMajor(from: "1.11.2")),
+        .package(url: "https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
         .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
         .package(url: "https://github.com/tsolomko/SWCompression.git", .upToNextMajor(from: "4.8.5")),
-        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.20.2"),
-        .package(url: "https://github.com/apple/swift-log.git", exact: "1.4.4"),
+        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.27.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -29,11 +28,10 @@ let package = Package(
         .target(
             name: "MiddlewareRum",
             dependencies: [
-                .product(name: "CrashReporter", package: "PLCrashReporter", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst])),
+                .product(name: "CrashReporter", package: "PLCrashReporter"),
                 .product(name: "DeviceKit", package: "DeviceKit", condition: .when(platforms: [.iOS, .tvOS, .watchOS, .macCatalyst])),
                 .product(name: "SWCompression", package: "SWCompression"),
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-                .product(name: "Logging", package: "swift-log"),
             ],
             path: "Sources"
         ),
@@ -41,6 +39,7 @@ let package = Package(
             name: "MiddlewareRumTests",
             dependencies: [
                 "MiddlewareRum",
+                .product(name: "CrashReporter", package: "PLCrashReporter")
             ]),
     ]
 )

@@ -9,12 +9,12 @@ on:
 
 jobs:
   release:
-    runs-on: macOS-13
+    runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v4
     - uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: 15.1
+        xcode-version: latest-stable
     - name: Install Homebrew kegs
       run: make setup-brew
     - name: Build for iOS
