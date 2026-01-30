@@ -8,6 +8,7 @@ private var rumSessionId = generateNewSessionId()
 private var sessionIdExpiration = Date().addingTimeInterval(TimeInterval(MAX_SESSION_AGE_SECONDS))
 private let sessionIdLock = NSLock()
 private var sessionIdCallbacks: [(() -> Void)] = []
+private var sessionStartTime = Int(Date().timeIntervalSince1970 * 1000)
 
 func generateNewSessionId() -> String {
     var i=0
@@ -43,6 +44,7 @@ func getRumSessionId(forceNewSessionId: Bool = false) -> String {
         sessionIdExpiration = Date().addingTimeInterval(TimeInterval(MAX_SESSION_AGE_SECONDS))
         oldRumSessionId = rumSessionId
         rumSessionId = generateNewSessionId()
+        sessionStartTime = Int(Date().timeIntervalSince1970 * 1000)
         isSessionIdChanged = true
         callbacks = sessionIdCallbacks
     }
@@ -52,17 +54,23 @@ func getRumSessionId(forceNewSessionId: Bool = false) -> String {
         callback()
     }
     if isSessionIdChanged {
-        createSessionIdChangeSpan(newSessionId: rumSessionId, previousSessionId: oldRumSessionId)
+        createSessionIdChangeSpan(newSessionId: rumSessionId, previousSessionId: oldRumSessionId, sessionStartTime: sessionStartTime)
     }
     return rumSessionId
 }
-func createSessionIdChangeSpan(newSessionId: String, previousSessionId: String) {
+
+func getSessionStartTime() -> Int {
+    return sessionStartTime
+}
+
+func createSessionIdChangeSpan(newSessionId: String, previousSessionId: String, sessionStartTime: Int) {
     let now = Date()
     let tracer = OpenTelemetry.instance.tracerProvider.get(
         instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
         instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
     var activeResource = OpenTelemetry.instance.tracerProvider.getActiveResource()
     activeResource.attributes[MiddlewareConstants.Attributes.SESSION_ID] = AttributeValue(newSessionId)
+    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_START_TIME] = AttributeValue(sessionStartTime)
     OpenTelemetry.instance.tracerProvider.updateActiveResource(activeResource)
 
     let span = tracer.spanBuilder(spanName: MiddlewareConstants.Spans.SESSION_ID_CHANGE).setStartTime(time: now).startSpan()

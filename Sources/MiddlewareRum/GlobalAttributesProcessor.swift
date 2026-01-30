@@ -39,6 +39,7 @@ class GlobalAttributesProcessor: SpanProcessor {
             span.setAttribute(key: MiddlewareConstants.Attributes.APP_VERSION, value: appVersion!)
         }
         span.setAttribute(key: MiddlewareConstants.Attributes.SESSION_ID, value: getRumSessionId())
+        span.setAttribute(key: MiddlewareConstants.Attributes.SESSION_START_TIME, value: getSessionStartTime())
         span.setAttribute(key: MiddlewareConstants.Attributes.RUM_SDK_VERSION, value: MiddlewareConstants.Global.VERSION_STRING)
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: deviceModel)
         if Thread.current.isMainThread {
