@@ -30,14 +30,16 @@ public enum CheckState {
             endpoint: URL(string: builder.target! + "/v1/traces")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
                                       headers: [
+                                        ("Authorization", builder.rumAccessToken!),
                                         ("Origin","sdk.middleware.io"),
                                         ("Access-Control-Allow-Headers", "*")
                                       ]
                                      )
         )
+        let resource = createMiddlewareResource(builder: builder)
         let provider = TracerProviderBuilder()
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
-            .with(resource: createMiddlewareResource(builder: builder))
+            .with(resource: resource)
             .add(spanProcessors: [
                 GlobalAttributesProcessor(),
                 SignPostIntegration(),
@@ -57,7 +59,7 @@ public enum CheckState {
         )
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
-            .with(resource: createMiddlewareResource(builder: builder))
+            .with(resource: resource)
             .with(processors: [SimpleLogRecordProcessor(logRecordExporter: otlpLogExporter)])
             .build())
         
@@ -180,15 +182,24 @@ public enum CheckState {
     }
     
     class func createMiddlewareResource(builder: MiddlewareRumBuilder) -> Resource {
+        
+        var app = Bundle.main.infoDictionary?["CFBundleName"] as? String
+        if app == "" {
+            app = MiddlewareConstants.Global.UNKNOWN_APP_NAME
+        }
         var defaultResource = DefaultResources().get()
         defaultResource.merge(other: Resource(attributes: [
-            "mw.account_key" :AttributeValue(builder.rumAccessToken!),
+            MiddlewareConstants.Attributes.RUM_SDK_VERSION: AttributeValue(MiddlewareConstants.Global.VERSION_STRING),
+            MiddlewareConstants.Attributes.APP: AttributeValue(app!),
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
-            "browser.trace" : AttributeValue("true"),
-            "mw.rum" : AttributeValue("true"),
+            MiddlewareConstants.Attributes.MW_RUM: AttributeValue("true"),
             ResourceAttributes.deviceModelName.rawValue: AttributeValue(Device.current.model),
-            "project.name":AttributeValue(builder.projectName!),
-            "session.id": AttributeValue(getSessionId())
+            MiddlewareConstants.Attributes.PROJECT_NAME: AttributeValue(builder.projectName!),
+            MiddlewareConstants.Attributes.SESSION_ID: AttributeValue(getSessionId()),
+            MiddlewareConstants.Attributes.SESSION_START_TIME: AttributeValue(getSessionStartTime()),
+            MiddlewareConstants.Attributes.APP_VERSION: AttributeValue(getAppVersion()!),
+            MiddlewareConstants.Attributes.OS: AttributeValue("iOS"),
+            MiddlewareConstants.Attributes.RECORDING: AttributeValue(builder.isRecordingEnabled() ? "1" : "0")
         ]))
         return defaultResource
     }

@@ -12,14 +12,11 @@ class MessageCollector: NSObject {
     private var imagesWaiting = [BatchArch]()
     private var imagesSending = [BatchArch]()
     private let messagesQueue = OperationQueue()
-    private var target: String?
-    private var token: String?
     private var sendInterval: Timer?
-    
+    private var networkManager: NetworkManager
     
     init(target: String?, token: String?) {
-        self.target = target
-        self.token = token
+        self.networkManager = NetworkManager(target: target!, token: token!)
     }
     
     func start() {
@@ -55,7 +52,9 @@ class MessageCollector: NSObject {
         imagesSending.append(images)
         
         Log.debug("Sending images \(images.name) \(images.data.count)")
-        NetworkManager(target: self.target!, token: self.token!).sendImages(sessionId: getRumSessionId(), images: images.data, name: images.name) { (success) in
+        let sessionId = getRumSessionId()
+        let resourceAttributes = convertAttributesToJson(OpenTelemetry.instance.tracerProvider.getActiveResource().attributes)
+        networkManager.sendImages(sessionId: sessionId, resourceAttributes: resourceAttributes!, images: images.data, name: images.name) { (success) in
             self.imagesSending.removeAll { (waiting) -> Bool in
                 images.name == waiting.name
             }

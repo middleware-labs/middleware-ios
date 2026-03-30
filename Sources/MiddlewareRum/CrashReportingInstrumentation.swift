@@ -105,7 +105,6 @@ class CrashReportingInstrumentation {
             }
         }
         span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
-        span.setAttribute(key: "error", value: true)
         var exceptionAttributes = [String: AttributeValue]()
 #if !os(macOS)
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
