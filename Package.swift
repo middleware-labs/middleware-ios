@@ -18,7 +18,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url:"https://github.com/microsoft/plcrashreporter", from: "1.8.0"),
-        .package(url: "https://github.com/devicekit/DeviceKit.git", from: "5.1.0"),
+        .package(url: "https://github.com/devicekit/DeviceKit.git", exact: "5.1.0"),
         .package(url: "https://github.com/tsolomko/SWCompression.git", .upToNextMajor(from: "4.8.5")),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.27.0")
     ],

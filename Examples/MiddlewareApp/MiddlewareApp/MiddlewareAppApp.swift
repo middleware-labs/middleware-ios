@@ -8,15 +8,14 @@
 import SwiftUI
 import MiddlewareRum
 
-
 @main
 struct MiddlewareAppApp: App {
     init() {
         MiddlewareRumBuilder()
-            .globalAttributes(["some" : "value"])
+            .globalAttributes(["name" : "Archish"])
                 .target("<target>")
-            .serviceName("Mobile-SDK-Android")
-            .projectName("Mobile-SDK-Android")
+            .serviceName("Mobile-SDK-iOS")
+            .projectName("Mobile-SDK-iOS")
                 .rumAccessToken("<rum-token>")
             .deploymentEnvironment("PROD")
             .build()

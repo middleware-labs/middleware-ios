@@ -18,3 +18,39 @@ func tracer() -> Tracer {
 func loggerBuilder () -> LoggerBuilder {
     return OpenTelemetry.instance.loggerProvider.loggerBuilder(instrumentationScopeName: MiddlewareConstants.Global.INSTRUMENTATION_NAME)
 }
+
+private func attributeValueToAny(_ value: AttributeValue) -> Any {
+    switch value {
+    case .string(let v): return v
+    case .bool(let v): return v
+    case .int(let v): return v
+    case .double(let v): return v
+    case .stringArray(let v): return v
+    case .boolArray(let v): return v
+    case .intArray(let v): return v
+    case .doubleArray(let v): return v
+    case .set(let v):
+        return v.labels.mapValues { attributeValueToAny($0) }
+    }
+}
+
+func getAppVersion() -> String? {
+    let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
+    let bundleShortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+    return bundleShortVersion ?? bundleVersion
+}
+
+func convertAttributesToJson(_ attributes: [String: AttributeValue]) -> String? {
+    let jsonObject = attributes.mapValues { attributeValueToAny($0) }
+
+    guard JSONSerialization.isValidJSONObject(jsonObject) else {
+        return nil
+    }
+
+    do {
+        let data = try JSONSerialization.data(withJSONObject: jsonObject, options: [])
+        return String(data: data, encoding: .utf8)
+    } catch {
+        return nil
+    }
+}
