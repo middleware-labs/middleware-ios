@@ -14,9 +14,17 @@
 		A00000000000000000000033 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000E /* WebView.swift */; };
 		A00000000000000000000034 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000F /* Assets.xcassets */; };
 		A00000000000000000000035 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* Preview Assets.xcassets */; };
+		A00000000000000000000036 /* RumLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* RumLabView.swift */; };
 		A00000000000000000000037 /* MiddlewareAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* MiddlewareAppTests.swift */; };
 		A00000000000000000000038 /* MiddlewareAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* MiddlewareAppUITests.swift */; };
 		A00000000000000000000039 /* MiddlewareAppUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* MiddlewareAppUITestsLaunchTests.swift */; };
+		A0000000000000000000003A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001A /* Models.swift */; };
+		A0000000000000000000003B /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001B /* ProductDetailView.swift */; };
+		A0000000000000000000003C /* CartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001C /* CartView.swift */; };
+		A0000000000000000000003D /* CheckoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001D /* CheckoutView.swift */; };
+		A0000000000000000000003E /* OrderConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001E /* OrderConfirmationView.swift */; };
+		A0000000000000000000003F /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001F /* AccountView.swift */; };
+		A00000000000000000000071 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000070 /* LoginView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +57,14 @@
 		A00000000000000000000014 /* MiddlewareAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiddlewareAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000015 /* MiddlewareAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddlewareAppUITests.swift; sourceTree = "<group>"; };
 		A00000000000000000000016 /* MiddlewareAppUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddlewareAppUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		A00000000000000000000019 /* RumLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RumLabView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A0000000000000000000001B /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001C /* CartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001D /* CheckoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001E /* OrderConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderConfirmationView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001F /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		A00000000000000000000070 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +122,14 @@
 				A0000000000000000000000E /* WebView.swift */,
 				A0000000000000000000000F /* Assets.xcassets */,
 				A00000000000000000000010 /* Preview Content */,
+				A0000000000000000000001A /* Models.swift */,
+				A0000000000000000000001B /* ProductDetailView.swift */,
+				A0000000000000000000001C /* CartView.swift */,
+				A0000000000000000000001D /* CheckoutView.swift */,
+				A0000000000000000000001E /* OrderConfirmationView.swift */,
+				A0000000000000000000001F /* AccountView.swift */,
+				A00000000000000000000070 /* LoginView.swift */,
+				A00000000000000000000019 /* RumLabView.swift */,
 			);
 			path = MiddlewareApp;
 			sourceTree = "<group>";
@@ -145,6 +169,7 @@
 				A00000000000000000000020 /* Sources */,
 				A00000000000000000000021 /* Frameworks */,
 				A00000000000000000000022 /* Resources */,
+				A00000000000000000000080 /* Upload Middleware dSYM */,
 			);
 			buildRules = (
 			);
@@ -266,6 +291,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A00000000000000000000080 /* Upload Middleware dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Middleware dSYM";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"${SRCROOT}/../../Tools/dsym-upload/xcode-upload-dsym.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		A00000000000000000000020 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -275,6 +322,14 @@
 				A00000000000000000000031 /* SampleView.swift in Sources */,
 				A00000000000000000000032 /* MenuView.swift in Sources */,
 				A00000000000000000000033 /* WebView.swift in Sources */,
+				A00000000000000000000036 /* RumLabView.swift in Sources */,
+				A0000000000000000000003A /* Models.swift in Sources */,
+				A0000000000000000000003B /* ProductDetailView.swift in Sources */,
+				A0000000000000000000003C /* CartView.swift in Sources */,
+				A0000000000000000000003D /* CheckoutView.swift in Sources */,
+				A0000000000000000000003E /* OrderConfirmationView.swift in Sources */,
+				A0000000000000000000003F /* AccountView.swift in Sources */,
+				A00000000000000000000071 /* LoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

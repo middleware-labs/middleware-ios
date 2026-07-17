@@ -84,50 +84,106 @@ class CrashReportingInstrumentation {
         Log.debug("MiddlewareRum: Loading crash report size \(data?.count as Any)")
         
         let report = try PLCrashReport(data: data)
-        var exceptionType = report.signalInfo.name
-        if(report.hasExceptionInfo) {
-            exceptionType = report.exceptionInfo.exceptionName
+
+        // Signal crashes (e.g. SIGSEGV from rumCrashApp) have signalInfo only.
+        // NSException / ObjC throws also populate exceptionInfo.
+        var exceptionType = report.signalInfo?.name ?? "exception"
+        var exceptionMessage: String?
+        if report.hasExceptionInfo {
+            if let name = report.exceptionInfo.exceptionName, !name.isEmpty {
+                exceptionType = name
+            }
+            if let reason = report.exceptionInfo.exceptionReason, !reason.isEmpty {
+                exceptionMessage = reason
+            }
         }
-        
+        if exceptionMessage == nil, let signal = report.signalInfo {
+            // Synthesize a message for pure signal crashes so exception.message is never empty
+            let code = signal.code ?? ""
+            exceptionMessage = code.isEmpty
+                ? "App terminated with \(signal.name ?? "signal") at \(signal.address)"
+                : "App terminated with \(signal.name ?? "signal") (\(code)) at \(signal.address)"
+        }
+
+        var exceptionStacktrace: String?
+        for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
+            exceptionStacktrace = crashedThreadToStack(report: report, thread: thread)
+            break
+        }
+
         let now = Date()
-        let span = tracer().spanBuilder(spanName: exceptionType ?? "exception").setStartTime(time: now).startSpan()
+        let span = tracer().spanBuilder(spanName: exceptionType).setStartTime(time: now).startSpan()
         span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "crash")
         span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "error")
-        if(report.customData != nil ) {
-            let customData = try NSKeyedUnarchiver.unarchivedObject(ofClass: NSDictionary.self, from: report.customData) as? [String: String]
-            if(customData != nil) {
-                span.setAttribute(key: "crash.rumSessionId", value: customData!["sessionId"]!)
-                span.setAttribute(key: "crash.batteryLevel", value: customData!["batteryLevel"]!)
-                span.setAttribute(key: "crash.freeDiskSpace", value: customData!["freeDiskSpace"]!)
-                span.setAttribute(key: "crash.freeMemory", value: customData!["freeMemory"]!)
+        span.setAttribute(key: MiddlewareConstants.Attributes.ERROR, value: true)
+
+        // Mirror MiddlewareRum.addException / Android CrashAttributesExtractor:
+        // put exception.* on the SPAN so RUM queries for exception.* resolve.
+        span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_TYPE, value: exceptionType)
+        if let exceptionMessage {
+            span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_MESSAGE, value: exceptionMessage)
+        }
+        if let exceptionStacktrace, !exceptionStacktrace.isEmpty {
+            span.setAttribute(key: MiddlewareConstants.Attributes.EXCEPTION_STACKTRACE, value: exceptionStacktrace)
+        }
+        span.setAttribute(key: "exception.framework", value: "ios")
+
+        if let customDataBytes = report.customData {
+            let customData = try NSKeyedUnarchiver.unarchivedObject(
+                ofClass: NSDictionary.self,
+                from: customDataBytes
+            ) as? [String: String]
+            if let customData {
+                if let sessionId = customData["sessionId"] {
+                    span.setAttribute(key: "crash.rumSessionId", value: sessionId)
+                }
+                if let batteryLevel = customData["batteryLevel"] {
+                    span.setAttribute(key: "crash.batteryLevel", value: batteryLevel)
+                }
+                if let freeDiskSpace = customData["freeDiskSpace"] {
+                    span.setAttribute(key: "crash.freeDiskSpace", value: freeDiskSpace)
+                }
+                if let freeMemory = customData["freeMemory"] {
+                    span.setAttribute(key: "crash.freeMemory", value: freeMemory)
+                }
             } else {
-                span.setAttribute(key: "crash.rumSessionId", value: String(decoding: report.customData, as: UTF8.self))
+                span.setAttribute(key: "crash.rumSessionId", value: String(decoding: customDataBytes, as: UTF8.self))
             }
         }
         span.setAttribute(key: "crash.app.version", value: report.applicationInfo.applicationMarketingVersion)
-        var exceptionAttributes = [String: AttributeValue]()
 #if !os(macOS)
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: DeviceKit.Device.current.description)
 #else
         span.setAttribute(key: MiddlewareConstants.Attributes.DEVICE_MODEL_NAME, value: Device.current.model)
 #endif
-        
-        exceptionAttributes["exception.type"] = AttributeValue(exceptionType ?? "unknown")
-        span.setAttribute(key: "crash.address", value: report.signalInfo.address.description)
-        for case let thread as PLCrashReportThreadInfo in report.threads where thread.crashed {
-            exceptionAttributes["exception.stacktrace"] = AttributeValue(crashedThreadToStack(report: report, thread: thread))
-            break
-        }
-        if report.hasExceptionInfo {
-            if(report.exceptionInfo.exceptionName != nil) {
-                exceptionAttributes["exception.type"] = AttributeValue(report.exceptionInfo.exceptionName as Any)
-            }
-            if(report.exceptionInfo.exceptionReason != nil) {
-                exceptionAttributes["exception.message"] = AttributeValue(report.exceptionInfo.exceptionReason as Any)
+
+        if let signal = report.signalInfo {
+            span.setAttribute(key: "crash.address", value: signal.address.description)
+            if let signalName = signal.name {
+                span.setAttribute(key: "crash.signal", value: signalName)
             }
         }
+
+        // Keep event-level attributes for backwards compatibility, using non-optional AttributeValue
+        var exceptionAttributes = [String: AttributeValue]()
+        exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_TYPE] = AttributeValue(exceptionType)
+        if let exceptionMessage {
+            exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_MESSAGE] = AttributeValue(exceptionMessage)
+        }
+        if let exceptionStacktrace, !exceptionStacktrace.isEmpty {
+            exceptionAttributes[MiddlewareConstants.Attributes.EXCEPTION_STACKTRACE] = AttributeValue(exceptionStacktrace)
+        }
+        span.addEvent(name: "exception", attributes: exceptionAttributes, timestamp: report.systemInfo.timestamp)
         span.addEvent(name: "crash.timestamp", attributes: exceptionAttributes, timestamp: report.systemInfo.timestamp)
         span.end(time: now)
+
+        // Crash spans are emitted on next launch; flush immediately so BatchSpanProcessor
+        // does not delay OTLP export of exception.* attributes.
+        if let provider = OpenTelemetry.instance.tracerProvider as? TracerProviderSdk {
+            provider.forceFlush(timeout: 5)
+        }
+
+        Log.debug("MiddlewareRum: Crash span exported type=\(exceptionType) message=\(exceptionMessage ?? "")")
     }
     
     func crashedThreadToStack(report: PLCrashReport, thread: PLCrashReportThreadInfo) -> String {

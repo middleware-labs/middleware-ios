@@ -1,134 +1,172 @@
-// Copyright © 2023 Middleware. Licensed under the Apache License, Version 2.0
+// Copyright © 2024 Middleware. Licensed under the Apache License, Version 2.0
+// CoffeeCart iOS — Menu tab: coffee catalogue with live API fetch for Network Monitoring.
 
 import SwiftUI
 import MiddlewareRum
 
 struct MenuView: View {
-    @State private var showWebView = false
-    @State private var text = ""
-    @State private var toggle = true
-    @State private var isShowingModal = false
-    
+    @State private var apiStatus: String = ""
+    @State private var isLoadingApi = false
+
     var body: some View {
-        Image(systemName: "globe")
-            .imageScale(.large)
-            .foregroundStyle(.tint)
-        Text("Middleware Application")
-            .font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
-            .foregroundStyle(.red)
-        Button(action: {makeHttpCall()}) {
-            Text("HTTP CALL")
-                .padding(15)
-                .foregroundColor(.blue)
-                .border(Color.blue, width: 2)
-        }.buttonStyle(PlainButtonStyle())
-        Button(action: {customEvent()}) {
-            Text("CUSTOM EVENT")
-                .padding(15)
-                .foregroundColor(.blue)
-                .border(Color.blue, width: 2)
-        }.buttonStyle(PlainButtonStyle())
-        
-        NavigationStack{
-            VStack {
-                Button(action: {showWebView = true}) {
-                    Text("WEB VIEW")
-                        .padding(15)
-                        .foregroundColor(.blue)
-                        .border(Color.blue, width: 2)
-                }.buttonStyle(PlainButtonStyle())
-            }
-        }.navigationDestination(isPresented: $showWebView) {
-            WebView()
-        }
-        
-        Button(action: {crashApp()}) {
-            Text("CRASH APP")
-                .padding(15)
-                .foregroundColor(.blue)
-                .border(Color.blue, width: 2)
-        }.buttonStyle(PlainButtonStyle())
-        Button(action: {
-            customException()}) {
-                Text("CUSTOM EXCEPTION")
-                    .padding(15)
-                    .foregroundColor(.blue)
-                    .border(Color.blue, width: 2)
-            }.buttonStyle(PlainButtonStyle())
-        HStack {
-            TextField("Text", text: $text)
-                .sensitive()
-                .padding()
-                .keyboardType(.numberPad)
-            Button(action: { hideKeyboard() } , label: {
-                Text("OK")
-            })
-        }
-        HStack {
-            Toggle(isOn: $toggle) {
-                Text("Toggle")
-            }
-            // Perhaps add a button to dismiss it
-            Button("Modal") {
-                isShowingModal.toggle()
-            }.sheet(isPresented: $isShowingModal, content: {
-                VStack {
-                    Text("MODAL SHEET")
-                    Text("PLEASE IGNORE")
-                    Button("Dismiss") {
-                        isShowingModal.toggle()
+        ScrollView {
+            VStack(spacing: 0) {
+
+                // MARK: Hero header
+                VStack(spacing: 6) {
+                    Text("Coffee Cart")
+                        .font(.custom("Georgia-Bold", size: 36))
+                        .foregroundColor(.espresso)
+                    Text("Specialty coffee, crafted for you")
+                        .font(.subheadline)
+                        .italic()
+                        .foregroundColor(.caramel)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 28)
+                .background(Color.cream)
+
+                // MARK: Today's pick banner
+                HStack {
+                    Image(systemName: "sun.max.fill")
+                        .foregroundColor(.white)
+                    Text("Today's Pick: Cold Brew — 20% off")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.caramel)
+
+                // MARK: Product grid
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                    spacing: 12
+                ) {
+                    ForEach(coffeeMenu) { product in
+                        NavigationLink(value: product) {
+                            ProductCard(product: product)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
-            })
+                .padding(16)
+
+                // MARK: Live API status card
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Image(systemName: "network")
+                            .foregroundColor(.caramel)
+                        Text("Live Catalog  ·  Network Monitoring")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.espresso)
+                        Spacer()
+                        Button {
+                            fetchApiProducts()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(isLoadingApi ? .secondary : .caramel)
+                        }
+                        .disabled(isLoadingApi)
+                    }
+
+                    if isLoadingApi {
+                        HStack(spacing: 8) {
+                            ProgressView().tint(.caramel)
+                            Text("Fetching from demo.mw.dev…")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else if !apiStatus.isEmpty {
+                        Text(apiStatus)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(16)
+                .background(Color.cream)
+                .cornerRadius(14)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+            }
         }
+        .background(Color(red: 0.97, green: 0.94, blue: 0.90).ignoresSafeArea())
+        .navigationBarHidden(true)
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(product: product)
+        }
+        .onAppear {
+            MiddlewareRum.setScreenName("Menu")
+            MiddlewareRum.info("MenuView appeared")
+            if apiStatus.isEmpty { fetchApiProducts() }
+        }
+    }
+
+    // MARK: - Network call (exercises Network Monitoring instrumentation)
+
+    private func fetchApiProducts() {
+        isLoadingApi = true
+        apiStatus = ""
+        MiddlewareRum.info("Fetching products from demo.mw.dev API")
+
+        guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            DispatchQueue.main.async {
+                isLoadingApi = false
+                if let error = error {
+                    MiddlewareRum.addError("Product API error: \(error.localizedDescription)")
+                    apiStatus = "⚠️ API unavailable — showing local catalogue"
+                } else if let http = response as? HTTPURLResponse {
+                    MiddlewareRum.info("API response: HTTP \(http.statusCode), bytes: \(data?.count ?? 0)")
+                    apiStatus = "✓ Live catalogue synced  (HTTP \(http.statusCode))"
+                } else {
+                    MiddlewareRum.info("Catalogue fetch completed")
+                    apiStatus = "✓ Catalogue loaded"
+                }
+            }
+        }.resume()
     }
 }
 
-func makeHttpCall() {
-    MiddlewareRum.info("Started HTTP CALL")
-    let session = URLSession(configuration: .default)
-    guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    let task = session.dataTask(with: request) {
-        data, response, error in
-        if let data = data {
-            print(String(data: data, encoding: .utf8)!)
-        } else {
-            print("No data")
+// MARK: - Product Card
+
+struct ProductCard: View {
+    let product: Product
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(product.emoji)
+                .font(.system(size: 48))
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.headline)
+                    .foregroundColor(.espresso)
+                    .lineLimit(1)
+                Text(product.formattedPrice)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.caramel)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 14)
         }
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .cornerRadius(14)
+        .shadow(color: Color.espresso.opacity(0.08), radius: 6, x: 0, y: 3)
     }
-    task.resume()
-    MiddlewareRum.info("Ended HTTP CALL")
 }
-
-func customEvent() {
-    MiddlewareRum.info("Sending Custom Event")
-    MiddlewareRum.addEvent(name: "I am custom event", attributes: ["customerId": "12345"])
-    MiddlewareRum.info("Done Custom Event")
-    
-}
-
-enum MyError: Error {
-    case runtimeError(String)
-}
-
-func crashApp() {
-    let null = UnsafePointer<UInt8>(bitPattern: 0)
-    _ = null!.pointee
-}
-
-func customException()  {
-    MiddlewareRum.addException(e: NSException(name: NSExceptionName(rawValue: "RuntimeException"), reason: "I am custom exception"))
-}
-
-func hideKeyboard() {
-    print("hideKeyboard")
-    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    
-}
-
 
 #Preview {
-    MenuView()
+    NavigationStack {
+        MenuView()
+            .environmentObject(CartStore())
+    }
 }
