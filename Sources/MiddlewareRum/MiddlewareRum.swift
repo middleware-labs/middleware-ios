@@ -12,6 +12,13 @@ var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+private let recordingStateLock = NSLock()
+private var isSessionRecordingActive = false
+private var recordingTarget: String?
+private var recordingToken: String?
+#endif
+
 public enum CheckState {
     case unchecked
     case canStart
@@ -114,25 +121,31 @@ public enum CheckState {
         
         if(builder.isRecordingEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-            
+            recordingTarget = builder.target
+            recordingToken = builder.rumAccessToken
+
             if NetworkReachability.isNetworkAvailable() {
                 trackerState = CheckState.canStart
             } else {
                 trackerState = CheckState.cantStart
             }
-            let sessionStartTs = UInt64(Date().timeIntervalSince1970 * 1000)
             networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
                 if trackerState == CheckState.canStart {
-                    MessageCollector(target: builder.target, token: builder.rumAccessToken).start()
-                    let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
-                    ScreenshotManager.shared.setSettings(settings: captureSettings)
-                    ScreenshotManager.shared.start(startTs: sessionStartTs, target: builder.target, token: builder.rumAccessToken)
+                    syncSessionRecordingWithSampler()
                     networkCheckTimer?.invalidate()
                 }
                 if trackerState == CheckState.cantStart {
                     networkCheckTimer?.invalidate()
                 }
             })
+
+            // Re-evaluate recording when the session rotates so SessionBasedSampler
+            // decisions stay aligned with session recordings.
+            addSessionIdCallback {
+                DispatchQueue.main.async {
+                    syncSessionRecordingWithSampler()
+                }
+            }
 #else
             print("Session recording is not supported.")
 #endif
@@ -142,6 +155,46 @@ public enum CheckState {
         
         return true
     }
+
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+    /// Probe the active tracer sampler (SessionBasedSampler) and start/stop recording accordingly.
+    private class func syncSessionRecordingWithSampler() {
+        guard recordingTarget != nil, recordingToken != nil else {
+            return
+        }
+
+        let tracer = OpenTelemetry.instance.tracerProvider.get(
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
+        let probe = tracer.spanBuilder(spanName: "record init").startSpan()
+        let shouldRecord = probe.isRecording
+        probe.end()
+
+        recordingStateLock.lock()
+        let currentlyActive = isSessionRecordingActive
+        recordingStateLock.unlock()
+
+        if shouldRecord {
+            guard !currentlyActive else {
+                return
+            }
+            let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+            ScreenshotManager.shared.setSettings(settings: captureSettings)
+            ScreenshotManager.shared.start(
+                startTs: UInt64(Date().timeIntervalSince1970 * 1000),
+                target: recordingTarget,
+                token: recordingToken)
+            recordingStateLock.lock()
+            isSessionRecordingActive = true
+            recordingStateLock.unlock()
+        } else if currentlyActive {
+            ScreenshotManager.shared.stop()
+            recordingStateLock.lock()
+            isSessionRecordingActive = false
+            recordingStateLock.unlock()
+        }
+    }
+#endif
     
     @objc public class func setGlobalAttributes(_ attributes: [String: Any]) {
         globalAttributesLock.lock()
