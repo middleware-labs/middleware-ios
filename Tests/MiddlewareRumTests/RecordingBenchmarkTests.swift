@@ -3,9 +3,9 @@
 import XCTest
 @testable import MiddlewareRum
 import Foundation
-import UIKit
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+import UIKit
 
 final class RecordingBenchmarkTests: XCTestCase {
     func testRecordingCaptureMatrix() throws {
