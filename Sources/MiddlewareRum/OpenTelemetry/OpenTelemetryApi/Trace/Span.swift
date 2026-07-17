@@ -73,10 +73,10 @@ public extension Span {
     func hash(into hasher: inout Hasher) {
         hasher.combine(context.spanId)
     }
+}
 
-    static func == (lhs: Span, rhs: Span) -> Bool {
-        return lhs.context.spanId == rhs.context.spanId
-    }
+public func == (lhs: Span, rhs: Span) -> Bool {
+    return lhs.context.spanId == rhs.context.spanId
 }
 
 public extension Span {
