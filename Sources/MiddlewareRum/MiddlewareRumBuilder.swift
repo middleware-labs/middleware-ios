@@ -13,6 +13,9 @@ import Foundation
     public var frozenFrameDetectionThresholdMs: Double = 700
     public var sessionSamplingRatio: Double = 1.0
     private var configFlags: ConfigFlags
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+    public var recordingOptions = RecordingOptions()
+#endif
     
     @objc public override init () {
         configFlags = ConfigFlags()
@@ -108,6 +111,27 @@ import Foundation
     
     @objc public func isRecordingEnabled() -> Bool {
         return configFlags.isRecordingEnabled()
+    }
+
+#if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+    /// Sets the v3 session recording options (frequency, image quality,
+    /// masking toggles), mirroring the Android SDK's setRecordingOptions.
+    @objc public func recordingOptions(_ options: RecordingOptions) -> MiddlewareRumBuilder {
+        self.recordingOptions = options
+        return self
+    }
+#endif
+
+    /// Disables v3 session recording (rrweb-compatible screenshot events sent
+    /// through the metrics endpoint) and falls back to the legacy (v2)
+    /// screenshot recorder. v3 is enabled by default when recording is on.
+    @objc public func disableSessionRecordingV3() -> MiddlewareRumBuilder {
+        configFlags.disableRecordingV3()
+        return self
+    }
+
+    @objc public func isSessionRecordingV3Enabled() -> Bool {
+        return configFlags.isRecordingEnabled() && configFlags.isRecordingV3Enabled()
     }
     
     @objc public func isAppLifecycleInstrumentationEnabled() -> Bool {

@@ -234,10 +234,13 @@ public extension View {
 class SensitiveViewWrapper: UIView {
     override func didMoveToSuperview() {
         super.didMoveToSuperview()
+        // register with both recorders; each is a no-op while inactive
         if self.superview != nil {
             ScreenshotManager.shared.addSanitizedElement(self)
+            ReplayRecorderV3.shared.addSanitizedElement(self)
         } else {
             ScreenshotManager.shared.removeSanitizedElement(self)
+            ReplayRecorderV3.shared.removeSanitizedElement(self)
         }
     }
 }
@@ -247,8 +250,10 @@ class SensitiveTextField: UITextField {
         super.didMoveToWindow()
         if self.window != nil {
             ScreenshotManager.shared.addSanitizedElement(self)
+            ReplayRecorderV3.shared.addSanitizedElement(self)
         } else {
             ScreenshotManager.shared.removeSanitizedElement(self)
+            ReplayRecorderV3.shared.removeSanitizedElement(self)
         }
     }
 }
