@@ -15,7 +15,7 @@ struct MiddlewareAppApp: App {
             .target("<target>")
             .serviceName("CoffeeCart-iOS")
             .projectName("CoffeeCart-iOS")
-            .rumAccessToken("<rum-token>")
+            .recordingOptions(RecordingOptions().setMaskAllTextInputs(false))
             .deploymentEnvironment("PROD")
             .build()
 

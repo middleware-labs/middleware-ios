@@ -17,6 +17,8 @@ private let recordingStateLock = NSLock()
 private var isSessionRecordingActive = false
 private var recordingTarget: String?
 private var recordingToken: String?
+private var recordingV3Enabled = false
+private var recordingV3Options = RecordingOptions()
 #endif
 
 public enum CheckState {
@@ -123,6 +125,8 @@ public enum CheckState {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
             recordingTarget = builder.target
             recordingToken = builder.rumAccessToken
+            recordingV3Enabled = builder.isSessionRecordingV3Enabled()
+            recordingV3Options = builder.recordingOptions
 
             if NetworkReachability.isNetworkAvailable() {
                 trackerState = CheckState.canStart
@@ -178,17 +182,30 @@ public enum CheckState {
             guard !currentlyActive else {
                 return
             }
-            let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
-            ScreenshotManager.shared.setSettings(settings: captureSettings)
-            ScreenshotManager.shared.start(
-                startTs: UInt64(Date().timeIntervalSince1970 * 1000),
-                target: recordingTarget,
-                token: recordingToken)
+            if recordingV3Enabled {
+                // v3: rrweb events through the metrics endpoint; the legacy
+                // (v2) screenshot recorder must not run alongside it.
+                ReplayRecorderV3.shared.start(
+                    target: recordingTarget!,
+                    token: recordingToken!,
+                    options: recordingV3Options)
+            } else {
+                let captureSettings = getCaptureSettings(fps: 3, quality: "standard")
+                ScreenshotManager.shared.setSettings(settings: captureSettings)
+                ScreenshotManager.shared.start(
+                    startTs: UInt64(Date().timeIntervalSince1970 * 1000),
+                    target: recordingTarget,
+                    token: recordingToken)
+            }
             recordingStateLock.lock()
             isSessionRecordingActive = true
             recordingStateLock.unlock()
         } else if currentlyActive {
-            ScreenshotManager.shared.stop()
+            if recordingV3Enabled {
+                ReplayRecorderV3.shared.stop()
+            } else {
+                ScreenshotManager.shared.stop()
+            }
             recordingStateLock.lock()
             isSessionRecordingActive = false
             recordingStateLock.unlock()
@@ -252,7 +269,8 @@ public enum CheckState {
             MiddlewareConstants.Attributes.SESSION_START_TIME: AttributeValue(getSessionStartTime()),
             MiddlewareConstants.Attributes.APP_VERSION: AttributeValue(getAppVersion()!),
             MiddlewareConstants.Attributes.OS: AttributeValue("iOS"),
-            MiddlewareConstants.Attributes.RECORDING: AttributeValue(builder.isRecordingEnabled() ? "1" : "0")
+            MiddlewareConstants.Attributes.RECORDING: AttributeValue(builder.isRecordingEnabled() ? "1" : "0"),
+            MiddlewareConstants.Attributes.RECORDING_V3: AttributeValue(builder.isSessionRecordingV3Enabled() ? "1" : "0")
         ]))
         return defaultResource
     }
@@ -465,12 +483,14 @@ public enum CheckState {
     /// - Parameter view: Any UIView will be blurred
     @objc public class func addIgnoredView(_ view: UIView) {
         ScreenshotManager.shared.addSanitizedElement(view)
+        ReplayRecorderV3.shared.addSanitizedElement(view)
     }
-    
+
     /// To show sensitive information use this method.
     /// - Parameter view: Any view which is been sanitize already.
     @objc public class func removeIgnoredView(_ view: UIView) {
         ScreenshotManager.shared.removeSanitizedElement(view)
+        ReplayRecorderV3.shared.removeSanitizedElement(view)
     }
 #endif
 
