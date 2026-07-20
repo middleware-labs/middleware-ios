@@ -179,14 +179,83 @@ func initializeShowVCInstrumentation() {
 class UIInstrumentation {
     func start() {
         initializePresentationTransitionInstrumentation()
-        
+
         initializeShowVCInstrumentation()
-        
+
         abracadabra(clazz: UIApplication.self, orig: #selector(UIApplication.sendAction(_:to:from:for:)), swoosh: #selector(UIApplication.abracadabra_sendAction(_:to:from:for:)))
         abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidLoad), swoosh: #selector(UIViewController.abracadabra_viewDidLoad))
         abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidAppear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidAppear(_:)))
         abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidDisappear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidDisappear(_:)))
-        
+
+        startTapHeatmapCapture()
     }
+}
+
+/// Captures every user tap and emits it as a `tap` RUM span so the backend can build
+/// a click heatmap (parity with the browser SDK). Coordinates are window points —
+/// the same space the v3 replay uses — so a heatmap can overlay the replay screenshots.
+private func startTapHeatmapCapture() {
+    TouchTracker.shared.onTap = { location, window, timestampMs in
+        emitTapSpan(location: location, window: window, timestampMs: timestampMs)
+    }
+    TouchTracker.shared.enableTapCapture()
+}
+
+private func emitTapSpan(location: CGPoint, window: UIWindow, timestampMs: Int64) {
+    let target = window.hitTest(location, with: nil)
+    let screenName = getScreenName()
+    let x = Int(location.x)
+    let y = Int(location.y)
+    let width = Int(window.bounds.width)
+    let height = Int(window.bounds.height)
+    let targetClass = target.map { String(describing: type(of: $0)) }
+    let accessibilityId = target?.accessibilityIdentifier
+    let text = tapTargetText(target)
+
+    let span = tracer().spanBuilder(spanName: "tap").startSpan()
+    span.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "ui")
+    span.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "tap")
+    span.setAttribute(key: "x", value: x)
+    span.setAttribute(key: "y", value: y)
+    span.setAttribute(key: "pageX", value: x)
+    span.setAttribute(key: "pageY", value: y)
+    span.setAttribute(key: "viewport.width", value: width)
+    span.setAttribute(key: "viewport.height", value: height)
+    span.setAttribute(key: "target_xpath", value: buildTapSelector(screenName, targetClass, accessibilityId))
+    span.setAttribute(key: MiddlewareConstants.Attributes.SCREEN_NAME, value: screenName)
+    if let targetClass = targetClass {
+        span.setAttribute(key: MiddlewareConstants.Attributes.TARGET_TYPE, value: targetClass)
+    }
+    if let accessibilityId = accessibilityId, !accessibilityId.isEmpty {
+        span.setAttribute(key: "target.accessibility_id", value: accessibilityId)
+    }
+    if let text = text, !text.isEmpty {
+        span.setAttribute(key: "target.text", value: text)
+    }
+    span.end()
+}
+
+/// Best-effort human-readable label for the tapped view.
+private func tapTargetText(_ view: UIView?) -> String? {
+    switch view {
+    case let button as UIButton:
+        return button.currentTitle ?? button.titleLabel?.text
+    case let label as UILabel:
+        return label.text
+    case let textField as UITextField:
+        return textField.text ?? textField.placeholder
+    default:
+        return view?.accessibilityLabel
+    }
+}
+
+/// Synthetic selector (`Screen/ViewClass#accessibility-id`) matching the Android SDK,
+/// so the heatmap can group taps by element and highlight top elements.
+private func buildTapSelector(_ screenName: String, _ targetClass: String?, _ accessibilityId: String?) -> String {
+    var selector = screenName + "/" + (targetClass ?? "UIView")
+    if let accessibilityId = accessibilityId, !accessibilityId.isEmpty {
+        selector += "#" + accessibilityId
+    }
+    return selector
 }
 #endif
