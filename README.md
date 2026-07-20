@@ -247,9 +247,18 @@ MiddlewareRum.setGlobalAttributes(["some": "value"])
 
 ### WebView Instrumentation
 
+Bridges the native RUM session into web content loaded in a `WKWebView`. Pages instrumented with the Middleware browser RUM SDK detect the injected `window.MiddlewareNative` interface, adopt the native session id, and report all browser telemetry under the same session as the native app.
+
 ```swift
 MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
 ```
+
+Requirements:
+- Call `integrateWebViewWithBrowserRum(view:)` after creating the `WKWebView` and **before** loading the URL.
+- The loaded page must include the Middleware browser RUM SDK.
+- Do not call `removeAllUserScripts()` on the web view's `WKUserContentController` after integration — it removes the session bridge.
+
+Linking browser + mobile telemetry: the browser SDK inside the WebView and this SDK must report to the **same Middleware project** (same ingest target; each can use its own application/client token within that project). Cross-project linking is not supported — projects are stored separately and cannot be joined. With both in one project, the shared session id from this bridge unifies the session view, replay, and traces automatically.
 
 ### Enable Session Recording
 

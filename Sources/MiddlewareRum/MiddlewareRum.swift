@@ -418,9 +418,20 @@ public enum CheckState {
     }
     
 #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS)
+    private static let webViewIntegrations =
+        NSMapTable<WKWebView, WebViewInstrumentation>(keyOptions: .weakMemory,
+                                                      valueOptions: .strongMemory)
+
+    /// Bridges the native RUM session id into the given WKWebView so pages
+    /// instrumented with the Middleware browser RUM SDK report under the native
+    /// session. Must be called before loading the URL.
     @objc public class func integrateWebViewWithBrowserRum(view: WKWebView) {
-        let webkit = WebViewInstrumentation(view: view)
-        webkit.enable()
+        if webViewIntegrations.object(forKey: view) != nil {
+            return
+        }
+        let instrumentation = WebViewInstrumentation(view: view)
+        webViewIntegrations.setObject(instrumentation, forKey: view)
+        instrumentation.enable()
     }
 #endif
     
