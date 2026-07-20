@@ -1,5 +1,8 @@
 // Copyright © 2024 Middleware. Licensed under the Apache License, Version 2.0
-// CoffeeCart iOS — Help WebView: setScreenName, integrateWebViewWithBrowserRum, load middleware.io.
+// CoffeeCart iOS — Help WebView: hybrid RUM demo. The sandbox PWA runs the
+// Middleware browser SDK; integrateWebViewWithBrowserRum bridges the native
+// session id into it, so native and web telemetry (including both session
+// replay streams) land in one session.
 
 import Foundation
 import SwiftUI
@@ -8,14 +11,16 @@ import MiddlewareRum
 
 struct HelpWebView: UIViewRepresentable {
 
+    private static let hybridDemoURL = "https://sandbox-frontend.mw.dev"
+
     func makeUIView(context: Context) -> WKWebView {
         MiddlewareRum.setScreenName("Help")
-        MiddlewareRum.info("HelpWebView: loading middleware.io")
+        MiddlewareRum.info("HelpWebView: loading \(Self.hybridDemoURL)")
 
         let webView = WKWebView()
         MiddlewareRum.integrateWebViewWithBrowserRum(view: webView)
 
-        let request = URLRequest(url: URL(string: "https://middleware.io")!)
+        let request = URLRequest(url: URL(string: Self.hybridDemoURL)!)
         webView.load(request)
         return webView
     }
