@@ -20,6 +20,17 @@ jobs:
     - name: Build for iOS
       run: make build-for-testing-ios
   
+    - name: Verify podspec version matches tag
+      run: |
+        PODSPEC_VERSION=$(sed -n 's/^[[:space:]]*spec\.version[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' MiddlewareRum.podspec | head -1)
+        if [ "v${PODSPEC_VERSION}" != "$TAG" ]; then
+          echo "MiddlewareRum.podspec version (${PODSPEC_VERSION}) does not match release tag (${TAG})."
+          echo "Bump spec.version in MiddlewareRum.podspec (and VERSION_STRING in MiddlewareConstants.swift) first."
+          exit 1
+        fi
+      env:
+        TAG: ${{ github.event.inputs.versionName }}
+
     - name: Create and push tag
       run: |
         git config --global user.name "${{ github.actor }}"
@@ -28,6 +39,17 @@ jobs:
         git push origin $TAG
       env:
         TAG: ${{ github.event.inputs.versionName }}
+
+    # Publishes the pod to CocoaPods trunk. Runs after the tag push because
+    # trunk clones the source at tag v<spec.version>. Requires the
+    # COCOAPODS_TRUNK_TOKEN repository secret (from `pod trunk register`,
+    # the account must be an owner of the MiddlewareRum pod).
+    - name: Push podspec to CocoaPods trunk
+      run: |
+        pod --version
+        pod trunk push MiddlewareRum.podspec --allow-warnings --synchronous
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
 
     - name: Build Changelog
       id: github_release
