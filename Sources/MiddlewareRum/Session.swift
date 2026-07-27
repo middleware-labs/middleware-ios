@@ -9,6 +9,10 @@ private var sessionIdExpiration = Date().addingTimeInterval(TimeInterval(MAX_SES
 private let sessionIdLock = NSLock()
 private var sessionIdCallbacks: [(() -> Void)] = []
 private var sessionStartTime = Int(Date().timeIntervalSince1970 * 1000)
+/// True once an external host (e.g. the React Native SDK) has injected a
+/// session id via setNativeSessionInternal. While set, internal rotation
+/// (4h expiry, forceNewSessionId) is suppressed — the host owns the session.
+private var nativeSessionControl = false
 
 func generateNewSessionId() -> String {
     var i=0
@@ -40,7 +44,7 @@ func getRumSessionId(forceNewSessionId: Bool = false) -> String {
             sessionIdLock.unlock()
         }
     }
-    if Date() > sessionIdExpiration || forceNewSessionId {
+    if !nativeSessionControl && (Date() > sessionIdExpiration || forceNewSessionId) {
         sessionIdExpiration = Date().addingTimeInterval(TimeInterval(MAX_SESSION_AGE_SECONDS))
         oldRumSessionId = rumSessionId
         rumSessionId = generateNewSessionId()
@@ -63,15 +67,65 @@ func getSessionStartTime() -> Int {
     return sessionStartTime
 }
 
+/// Binds the session to an externally-owned id (e.g. the React Native SDK's
+/// JS session). Suppresses internal rotation until app restart — the external
+/// host owns the session lifecycle from here on.
+func setNativeSessionInternal(_ sessionId: String, startTimeMs: Int) {
+    var callbacks: [(() -> Void)] = []
+    var previousSessionId = ""
+    var changed = false
+    sessionIdLock.lock()
+    previousSessionId = rumSessionId
+    changed = (rumSessionId != sessionId)
+    rumSessionId = sessionId
+    sessionStartTime = startTimeMs
+    nativeSessionControl = true
+    sessionIdExpiration = Date.distantFuture
+    callbacks = sessionIdCallbacks
+    sessionIdLock.unlock()
+
+    // Even a re-push of the same id must fix the active resource: the initial
+    // resource was built with the auto-generated id before injection.
+    updateActiveResourceSession(sessionId: sessionId, startTime: startTimeMs)
+    if changed {
+        for callback in callbacks {
+            callback()
+        }
+        createSessionIdChangeSpan(newSessionId: sessionId, previousSessionId: previousSessionId, newSessionStartTime: startTimeMs)
+    }
+}
+
+func isNativeSessionControlled() -> Bool {
+    sessionIdLock.lock()
+    defer {
+        sessionIdLock.unlock()
+    }
+    return nativeSessionControl
+}
+
+/// Test hook: releases external session control and restores normal expiry.
+func resetNativeSessionControlInternal() {
+    sessionIdLock.lock()
+    defer {
+        sessionIdLock.unlock()
+    }
+    nativeSessionControl = false
+    sessionIdExpiration = Date().addingTimeInterval(TimeInterval(MAX_SESSION_AGE_SECONDS))
+}
+
+private func updateActiveResourceSession(sessionId: String, startTime: Int) {
+    var activeResource = OpenTelemetry.instance.tracerProvider.getActiveResource()
+    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_ID] = AttributeValue(sessionId)
+    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_START_TIME] = AttributeValue(startTime)
+    OpenTelemetry.instance.tracerProvider.updateActiveResource(activeResource)
+}
+
 func createSessionIdChangeSpan(newSessionId: String, previousSessionId: String, newSessionStartTime: Int) {
     let now = Date()
     let tracer = OpenTelemetry.instance.tracerProvider.get(
         instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
         instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
-    var activeResource = OpenTelemetry.instance.tracerProvider.getActiveResource()
-    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_ID] = AttributeValue(newSessionId)
-    activeResource.attributes[MiddlewareConstants.Attributes.SESSION_START_TIME] = AttributeValue(newSessionStartTime)
-    OpenTelemetry.instance.tracerProvider.updateActiveResource(activeResource)
+    updateActiveResourceSession(sessionId: newSessionId, startTime: newSessionStartTime)
 
     let span = tracer.spanBuilder(spanName: MiddlewareConstants.Spans.SESSION_ID_CHANGE).setStartTime(time: now).startSpan()
     span.setAttribute(key: MiddlewareConstants.Attributes.PREVIOUS_SESSION_ID, value: previousSessionId)

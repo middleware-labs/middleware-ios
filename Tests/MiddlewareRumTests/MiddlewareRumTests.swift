@@ -27,4 +27,16 @@ final class MiddlewareRumTests: XCTestCase {
         XCTAssertFalse(builder.isRecordingEnabled())
         XCTAssertFalse(builder.isSessionRecordingV3Enabled())
     }
+
+    func testResourceCarriesBrowserTraceAndRecordingFlags() {
+        let builder = MiddlewareRumBuilder()
+            .target("https://example.middleware.io")
+            .serviceName("test-service")
+            .projectName("test-project")
+            .rumAccessToken("token")
+        let resource = MiddlewareRum.createMiddlewareResource(builder: builder)
+        XCTAssertEqual(resource.attributes[MiddlewareConstants.Attributes.BROWSER_TRACE]?.description, "true")
+        XCTAssertEqual(resource.attributes[MiddlewareConstants.Attributes.RECORDING]?.description, "1")
+        XCTAssertEqual(resource.attributes[MiddlewareConstants.Attributes.RECORDING_V3]?.description, "1")
+    }
 }

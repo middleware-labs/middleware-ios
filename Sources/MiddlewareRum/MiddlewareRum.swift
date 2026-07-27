@@ -45,6 +45,7 @@ public enum CheckState {
                                       ]
                                      )
         )
+        rawSpanExporter = otlpTraceExporter
         let resource = createMiddlewareResource(builder: builder)
         let provider = TracerProviderBuilder()
             .with(sampler: SessionBasedSampler(ratio: builder.sessionSamplingRatio))
@@ -269,6 +270,7 @@ public enum CheckState {
             MiddlewareConstants.Attributes.SESSION_START_TIME: AttributeValue(getSessionStartTime()),
             MiddlewareConstants.Attributes.APP_VERSION: AttributeValue(getAppVersion()!),
             MiddlewareConstants.Attributes.OS: AttributeValue("iOS"),
+            MiddlewareConstants.Attributes.BROWSER_TRACE: AttributeValue("true"),
             MiddlewareConstants.Attributes.RECORDING: AttributeValue(builder.isRecordingEnabled() ? "1" : "0"),
             MiddlewareConstants.Attributes.RECORDING_V3: AttributeValue(builder.isSessionRecordingV3Enabled() ? "1" : "0")
         ]))
@@ -347,6 +349,19 @@ public enum CheckState {
     
     @objc public class func addSessionIdChangeCallback(_ callback: @escaping (() -> Void)) {
         addSessionIdCallback(callback)
+    }
+
+    /// Binds the RUM session to an externally-managed session id (React Native
+    /// / hybrid hosts). Internal session rotation is suppressed from this point
+    /// on — the caller owns the session lifecycle and must push every rotation.
+    /// The v3 session recording, crash reports, and all subsequent telemetry
+    /// follow the injected id.
+    ///
+    /// - Parameters:
+    ///   - sessionId: the externally-generated session id (32 hex chars)
+    ///   - startTimeMs: session start time in epoch milliseconds
+    @objc public class func setNativeSession(_ sessionId: String, startTimeMs: Double) {
+        setNativeSessionInternal(sessionId, startTimeMs: Int(startTimeMs.rounded()))
     }
     
     public class func getOpenTelemetrySdk() -> OpenTelemetry {

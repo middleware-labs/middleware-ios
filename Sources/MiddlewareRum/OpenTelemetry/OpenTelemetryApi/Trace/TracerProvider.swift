@@ -21,15 +21,18 @@ public protocol TracerProvider {
 }
 
 extension TracerProvider {
-    
+
+    /// Default for providers without resource support (e.g. the no-op
+    /// provider before registration). The previous default recursed into
+    /// itself and crashed.
     public func getActiveResource() -> Resource {
-        return getActiveResource()
+        return Resource()
     }
-    
+
     public func updateActiveResource(_ newResource: Resource) {
-        updateActiveResource(newResource)
+        // no-op for providers without resource support
     }
-    
+
     func get(instrumentationName: String) -> Tracer {
         return get(instrumentationName: instrumentationName, instrumentationVersion: nil)
     }
