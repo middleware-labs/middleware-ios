@@ -28,6 +28,11 @@ class CrashReportingInstrumentation {
         ogCrashReporter = crashReporter
         Log.debug("MiddlewareRum: Enabled crash reporting instrumentation.")
         setSessionId()
+        // Keep crash-to-session attribution current across rotations and
+        // externally-injected (native/RN) session ids.
+        addSessionIdCallback { [weak self] in
+            self?.setSessionId()
+        }
         setDeviceStats()
         startPollingForDeviceStats()
         if(!crashReporter!.hasPendingCrashReport()) {
