@@ -77,13 +77,20 @@ public enum CheckState {
             instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
             instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
         
-        AppStart(spanStart: middlewareRumInitTime).sendAppStartSpan()
-        let mwInit = tracer
-            .spanBuilder(spanName: "Middleware.initialize")
-            .setStartTime(time: middlewareRumInitTime)
-            .startSpan()
-        mwInit.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "appstart")
-        mwInit.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "app_activity")
+        // Hybrid hosts (React Native, Flutter) own app-start tracking and
+        // disable app-lifecycle instrumentation; skip the native AppStart /
+        // init spans there so app starts aren't double-counted.
+        var mwInit: Span?
+        if builder.isAppLifecycleInstrumentationEnabled() {
+            AppStart(spanStart: middlewareRumInitTime).sendAppStartSpan()
+            let initSpan = tracer
+                .spanBuilder(spanName: "Middleware.initialize")
+                .setStartTime(time: middlewareRumInitTime)
+                .startSpan()
+            initSpan.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "appstart")
+            initSpan.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "app_activity")
+            mwInit = initSpan
+        }
         setGlobalAttributes(builder.globalAttributes!)
         if(builder.deploymentEnvironment != nil) {
             setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
@@ -156,7 +163,7 @@ public enum CheckState {
 #endif
         }
         
-        mwInit.end()
+        mwInit?.end()
         
         return true
     }
