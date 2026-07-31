@@ -18,6 +18,7 @@
 		A00000000000000000000037 /* MiddlewareAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* MiddlewareAppTests.swift */; };
 		A00000000000000000000038 /* MiddlewareAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* MiddlewareAppUITests.swift */; };
 		A00000000000000000000039 /* MiddlewareAppUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* MiddlewareAppUITestsLaunchTests.swift */; };
+		A000000000000000000000B2 /* BenchJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A000000000000000000000B1 /* BenchJourneyUITests.swift */; };
 		A0000000000000000000003A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001A /* Models.swift */; };
 		A0000000000000000000003B /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001B /* ProductDetailView.swift */; };
 		A0000000000000000000003C /* CartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001C /* CartView.swift */; };
@@ -57,6 +58,7 @@
 		A00000000000000000000014 /* MiddlewareAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiddlewareAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000015 /* MiddlewareAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddlewareAppUITests.swift; sourceTree = "<group>"; };
 		A00000000000000000000016 /* MiddlewareAppUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddlewareAppUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		A000000000000000000000B1 /* BenchJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenchJourneyUITests.swift; sourceTree = "<group>"; };
 		A00000000000000000000019 /* RumLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RumLabView.swift; sourceTree = "<group>"; };
 		A0000000000000000000001A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A0000000000000000000001B /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 			children = (
 				A00000000000000000000015 /* MiddlewareAppUITests.swift */,
 				A00000000000000000000016 /* MiddlewareAppUITestsLaunchTests.swift */,
+				A000000000000000000000B1 /* BenchJourneyUITests.swift */,
 			);
 			path = MiddlewareAppUITests;
 			sourceTree = "<group>";
@@ -347,6 +350,7 @@
 			files = (
 				A00000000000000000000038 /* MiddlewareAppUITests.swift in Sources */,
 				A00000000000000000000039 /* MiddlewareAppUITestsLaunchTests.swift in Sources */,
+				A000000000000000000000B2 /* BenchJourneyUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

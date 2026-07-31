@@ -133,6 +133,14 @@ import Foundation
     @objc public func isSessionRecordingV3Enabled() -> Bool {
         return configFlags.isRecordingEnabled() && configFlags.isRecordingV3Enabled()
     }
+
+    /// Whether v3 is the configured recorder, independent of whether recording is
+    /// enabled. Unlike `isSessionRecordingV3Enabled()` this does not AND in the
+    /// recording flag, so a `startRecording()` call after a disabled-at-init setup
+    /// still picks v3 rather than falling back to the legacy v2 recorder.
+    @objc public func isRecordingV3Configured() -> Bool {
+        return configFlags.isRecordingV3Enabled()
+    }
     
     @objc public func isAppLifecycleInstrumentationEnabled() -> Bool {
         return configFlags.isAppLifecycleInstrumentationEnabled()
