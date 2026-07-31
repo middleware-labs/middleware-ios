@@ -79,13 +79,13 @@ Each cell is **tar upload count · total size**.
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.0.0"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.1.2"),
 ```
 
 ## Using Cocoapods
 
 ```ruby
-pod "MiddlewareRum", "~> 2.0.0"
+pod "MiddlewareRum", "~> 2.1.2"
 ```
 
 ## Initialization of Middleware iOS sdk
