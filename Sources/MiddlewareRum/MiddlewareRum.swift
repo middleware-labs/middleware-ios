@@ -13,12 +13,28 @@ var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
+/// Whether recording follows the sampler (`auto`) or has been explicitly
+/// turned on/off by the host through `startRecording()` / `stopRecording()`.
+/// A manual intent is sticky: it survives session rotation and sampler
+/// re-evaluation until the opposite call is made.
+enum RecordingIntent {
+    case auto
+    case forcedOn
+    case forcedOff
+}
+
 private let recordingStateLock = NSLock()
 private var isSessionRecordingActive = false
 private var recordingTarget: String?
 private var recordingToken: String?
 private var recordingV3Enabled = false
 private var recordingV3Options = RecordingOptions()
+/// Value of `builder.isRecordingEnabled()` at init. Recording context is captured
+/// even when this is false so `startRecording()` can turn recording on later.
+private var recordingEnabledAtInit = false
+private var recordingIntent: RecordingIntent = .auto
+/// How long we keep retrying the initial reachability check before giving up.
+private let recordingStartMaxWaitSeconds = 30.0
 #endif
 
 public enum CheckState {
@@ -31,10 +47,7 @@ public enum CheckState {
         
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
-        
-        var trackerState = CheckState.unchecked
-        var networkCheckTimer: Timer?
-        
+
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
             config: OtlpConfiguration(timeout: TimeInterval(10000),
@@ -129,58 +142,98 @@ public enum CheckState {
 #endif
         }
         
-        if(builder.isRecordingEnabled()) {
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-            recordingTarget = builder.target
-            recordingToken = builder.rumAccessToken
-            recordingV3Enabled = builder.isSessionRecordingV3Enabled()
-            recordingV3Options = builder.recordingOptions
+        // Capture the recording context unconditionally — startRecording() is an
+        // explicit host intent that overrides a disabled-at-init configuration,
+        // and it needs the target/token/options to build a recorder.
+        recordingStateLock.lock()
+        recordingTarget = builder.target
+        recordingToken = builder.rumAccessToken
+        // Deliberately NOT isSessionRecordingV3Enabled(): that ANDs in the
+        // recording flag, so a disabled-at-init config would later start the
+        // legacy v2 recorder instead of v3.
+        recordingV3Enabled = builder.isRecordingV3Configured()
+        recordingV3Options = builder.recordingOptions
+        recordingEnabledAtInit = builder.isRecordingEnabled()
+        recordingStateLock.unlock()
 
-            if NetworkReachability.isNetworkAvailable() {
-                trackerState = CheckState.canStart
-            } else {
-                trackerState = CheckState.cantStart
-            }
-            networkCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { (_) in
-                if trackerState == CheckState.canStart {
-                    syncSessionRecordingWithSampler()
-                    networkCheckTimer?.invalidate()
-                }
-                if trackerState == CheckState.cantStart {
-                    networkCheckTimer?.invalidate()
-                }
-            })
+        if builder.isRecordingEnabled() {
+            scheduleRecordingStart()
 
             // Re-evaluate recording when the session rotates so SessionBasedSampler
             // decisions stay aligned with session recordings.
             addSessionIdCallback {
                 DispatchQueue.main.async {
-                    syncSessionRecordingWithSampler()
+                    applyRecordingState()
                 }
             }
-#else
-            print("Session recording is not supported.")
-#endif
         }
-        
+#else
+        if builder.isRecordingEnabled() {
+            print("Session recording is not supported.")
+        }
+#endif
+
         mwInit?.end()
-        
+
         return true
     }
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-    /// Probe the active tracer sampler (SessionBasedSampler) and start/stop recording accordingly.
-    private class func syncSessionRecordingWithSampler() {
+    /// Defers the first recording start until the network is reachable.
+    ///
+    /// The timer is installed on the **main** run loop: `Timer.scheduledTimer`
+    /// binds to `RunLoop.current`, and hybrid hosts (React Native, Flutter) call
+    /// `build()` from a GCD queue that has no run loop running — there the timer
+    /// would never fire and recording would never start.
+    ///
+    /// Reachability is re-checked on every tick rather than once, so an app that
+    /// launches offline still starts recording once connectivity arrives.
+    private class func scheduleRecordingStart() {
+        DispatchQueue.main.async {
+            let deadline = Date().addingTimeInterval(recordingStartMaxWaitSeconds)
+            let timer = Timer(timeInterval: 0.1, repeats: true) { timer in
+                if NetworkReachability.isNetworkAvailable() {
+                    timer.invalidate()
+                    applyRecordingState()
+                    return
+                }
+                if Date() >= deadline {
+                    timer.invalidate()
+                    Log.debug("Network unreachable after \(recordingStartMaxWaitSeconds)s; session recording not started.")
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+        }
+    }
+
+    /// Resolves whether recording should be running and starts/stops it to match.
+    ///
+    /// Must run on the main thread: starting the recorder installs UIKit swizzles
+    /// and reads the key window.
+    ///
+    /// The decision honours the host's explicit intent first, and only falls back
+    /// to the sampler when no manual override is in effect.
+    private class func applyRecordingState() {
         guard recordingTarget != nil, recordingToken != nil else {
             return
         }
 
-        let tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
-            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
-        let probe = tracer.spanBuilder(spanName: "record init").startSpan()
-        let shouldRecord = probe.isRecording
-        probe.end()
+        recordingStateLock.lock()
+        let intent = recordingIntent
+        let enabledAtInit = recordingEnabledAtInit
+        recordingStateLock.unlock()
+
+        let shouldRecord: Bool
+        switch intent {
+        case .forcedOff:
+            shouldRecord = false
+        case .forcedOn:
+            // Explicit host intent wins over both the init flag and the sampler.
+            shouldRecord = true
+        case .auto:
+            shouldRecord = enabledAtInit && isSampledIn()
+        }
 
         recordingStateLock.lock()
         let currentlyActive = isSessionRecordingActive
@@ -208,6 +261,7 @@ public enum CheckState {
             recordingStateLock.lock()
             isSessionRecordingActive = true
             recordingStateLock.unlock()
+            updateRecordingResourceAttributes(recording: true)
         } else if currentlyActive {
             if recordingV3Enabled {
                 ReplayRecorderV3.shared.stop()
@@ -217,6 +271,83 @@ public enum CheckState {
             recordingStateLock.lock()
             isSessionRecordingActive = false
             recordingStateLock.unlock()
+            updateRecordingResourceAttributes(recording: false)
+        }
+    }
+
+    /// Probes the active tracer sampler (SessionBasedSampler) for this session.
+    private class func isSampledIn() -> Bool {
+        let tracer = OpenTelemetry.instance.tracerProvider.get(
+            instrumentationName: MiddlewareConstants.Global.INSTRUMENTATION_NAME,
+            instrumentationVersion: MiddlewareConstants.Global.VERSION_STRING)
+        let probe = tracer.spanBuilder(spanName: "record init").startSpan()
+        let sampled = probe.isRecording
+        probe.end()
+        return sampled
+    }
+
+    /// Keeps the `recording` / `recordingV3` resource attributes in step with the
+    /// live recording state. They are written once at init from the builder flags,
+    /// but recording can now be toggled at runtime — and these attributes are what
+    /// tells the backend a session has a replay to play back.
+    private class func updateRecordingResourceAttributes(recording: Bool) {
+        var activeResource = OpenTelemetry.instance.tracerProvider.getActiveResource()
+        activeResource.attributes[MiddlewareConstants.Attributes.RECORDING] =
+            AttributeValue(recording ? "1" : "0")
+        activeResource.attributes[MiddlewareConstants.Attributes.RECORDING_V3] =
+            AttributeValue(recording && recordingV3Enabled ? "1" : "0")
+        OpenTelemetry.instance.tracerProvider.updateActiveResource(activeResource)
+    }
+
+    /// Starts session recording immediately, overriding both a disabled-at-init
+    /// configuration (`disableRecording()`) and the session sampler.
+    ///
+    /// The intent is sticky — recording keeps running across session rotations
+    /// until `stopRecording()` is called.
+    @objc public class func startRecording() {
+        recordingStateLock.lock()
+        recordingIntent = .forcedOn
+        let configured = recordingTarget != nil && recordingToken != nil
+        recordingStateLock.unlock()
+
+        guard configured else {
+            Log.debug("startRecording() called before MiddlewareRum was initialized; ignoring.")
+            return
+        }
+        onMain { applyRecordingState() }
+    }
+
+    /// Stops session recording immediately.
+    ///
+    /// The intent is sticky — recording stays off across session rotations and
+    /// sampler re-evaluation until `startRecording()` is called.
+    @objc public class func stopRecording() {
+        recordingStateLock.lock()
+        recordingIntent = .forcedOff
+        let configured = recordingTarget != nil && recordingToken != nil
+        recordingStateLock.unlock()
+
+        guard configured else {
+            Log.debug("stopRecording() called before MiddlewareRum was initialized; ignoring.")
+            return
+        }
+        onMain { applyRecordingState() }
+    }
+
+    /// Whether session recording is currently running.
+    @objc public class func isRecording() -> Bool {
+        recordingStateLock.lock()
+        defer {
+            recordingStateLock.unlock()
+        }
+        return isSessionRecordingActive
+    }
+
+    private class func onMain(_ work: @escaping () -> Void) {
+        if Thread.isMainThread {
+            work()
+        } else {
+            DispatchQueue.main.async(execute: work)
         }
     }
 #endif
