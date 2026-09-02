@@ -206,8 +206,52 @@ Methods that can be used for setting instrumentation & configure your applicatio
                 Sets the default polling for slow render detection. Default value in milliseconds is 700
             </td>
         </tr>
+        <tr>
+            <td>
+                <code lang="swift">.tracePropagationTargets([String])</code>
+            </td>
+            <td>
+                Restricts which outbound request URLs carry <code>traceparent</code>. By default every URL does. See <a href="#distributed-tracing">Distributed Tracing</a>.
+            </td>
+        </tr>
     </tbody>
 </table>
+
+### Distributed Tracing
+
+End-to-end tracing links a RUM session to the backend traces it caused, so you can open a slow
+screen in the session explorer and see the server spans behind it.
+
+It works by trace-context propagation: the SDK creates a client span for each outgoing request and
+injects the W3C `traceparent` header. Your instrumented backend continues that same trace, and
+Middleware correlates the two by trace ID.
+
+**This is on by default and requires no code.** `URLSession` is instrumented automatically, so any
+request made through it — directly, or through a library built on it such as Alamofire — is traced
+and propagates. Requests to the Middleware ingest endpoints are excluded.
+
+#### Restricting which hosts receive trace headers
+
+By default every request carries trace headers. To keep your trace IDs off third-party APIs, list
+the hosts that should receive them:
+
+```swift
+MiddlewareRumBuilder()
+    // ... other configuration
+    .tracePropagationTargets(["api\\.example\\.com", "checkout\\.example\\.com"])
+    .build()
+```
+
+Each entry is a regular expression searched for anywhere in the request URL, so `api.example.com`
+matches `https://api.example.com/orders`. Requests to other hosts are still timed and still appear
+in the session — they just travel without trace headers. Passing an empty array disables
+propagation entirely.
+
+#### Verifying it works
+
+In the session explorer, open a network event and check that the backend trace resolves. If the
+RUM span carries a trace ID but no backend spans appear, the request propagated correctly and the
+gap is on the backend side — confirm that service is instrumented and accepts W3C trace context.
 
 ### Logging using Middleware API
 

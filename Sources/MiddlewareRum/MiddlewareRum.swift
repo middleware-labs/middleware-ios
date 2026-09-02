@@ -110,7 +110,8 @@ public enum CheckState {
         }
         
         if(builder.isNetworkMonitoringEnabled()) {
-            _ = initializeNetworkMonitoring()
+            _ = initializeNetworkMonitoring(
+                tracePropagationTargets: builder.tracePropagationTargets)
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
@@ -415,14 +416,16 @@ public enum CheckState {
         return defaultResource
     }
     
-    class func initializeNetworkMonitoring() -> URLSessionInstrumentation {
+    class func initializeNetworkMonitoring(
+        tracePropagationTargets: [NSRegularExpression]? = nil
+    ) -> URLSessionInstrumentation {
         return URLSessionInstrumentation(configuration: URLSessionInstrumentationConfiguration(
             shouldInstrument: { URLRequest in
                 guard let url = URLRequest.url?.absoluteString else {
                     return true
                 }
                 let excludedPaths = ["/v1/metrics", "/v1/logs", "/v1/traces", "/v1/rum"]
-                
+
                 for path in excludedPaths {
                     if url.contains(path) {
                         return false
@@ -433,6 +436,17 @@ public enum CheckState {
             spanCustomization: { URLRequest, spanBuilder in
                 spanBuilder.setAttribute(key: MiddlewareConstants.Attributes.COMPONENT, value: "http")
                 spanBuilder.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "fetch")
+            },
+            shouldInjectTracingHeaders: { request in
+                // nil targets means the host never narrowed propagation, which is the default.
+                guard let targets = tracePropagationTargets else {
+                    return true
+                }
+                guard let url = request.url?.absoluteString else {
+                    return true
+                }
+                let range = NSRange(url.startIndex..., in: url)
+                return targets.contains { $0.firstMatch(in: url, range: range) != nil }
             },
             receivedError: { (error: Error, _: DataOrFile?, status: HTTPStatus, span: Span) in
                 span.addEvent(name: "error", attributes: ["description" : AttributeValue(error.localizedDescription)])

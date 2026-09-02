@@ -12,6 +12,9 @@ import Foundation
     public var slowFrameDetectionThresholdMs: Double = 16.7
     public var frozenFrameDetectionThresholdMs: Double = 700
     public var sessionSamplingRatio: Double = 1.0
+    /// Compiled `tracePropagationTargets`. `nil` means propagate to every URL, which is the
+    /// default and matches the browser SDK; an empty array means propagate to none.
+    public private(set) var tracePropagationTargets: [NSRegularExpression]?
     private var configFlags: ConfigFlags
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
     public var recordingOptions = RecordingOptions()
@@ -66,6 +69,27 @@ import Foundation
         return self
     }
     
+    /// Restricts which outbound requests carry `traceparent`, so that backend correlation works
+    /// for your own services without handing your trace ids to third parties.
+    ///
+    /// Each entry is a regular expression searched for anywhere in the request URL, so
+    /// `"api.example.com"` matches `https://api.example.com/orders`. Requests to other hosts are
+    /// still timed and still appear in the session; they just travel without trace headers.
+    /// Patterns that fail to compile are ignored.
+    ///
+    /// Not calling this propagates to every URL. Passing an empty array disables propagation.
+    @objc public func tracePropagationTargets(_ patterns: [String]) -> MiddlewareRumBuilder {
+        self.tracePropagationTargets = patterns.compactMap { pattern in
+            do {
+                return try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+            } catch {
+                print("Middleware: ignoring invalid tracePropagationTargets pattern '\(pattern)'")
+                return nil
+            }
+        }
+        return self
+    }
+
     @objc public func disableNetworkMonitoring() -> MiddlewareRumBuilder {
         configFlags.disableNetworkMonitoring();
         return self
