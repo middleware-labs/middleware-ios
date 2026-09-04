@@ -76,7 +76,7 @@ struct MenuView: View {
                     if isLoadingApi {
                         HStack(spacing: 8) {
                             ProgressView().tint(.caramel)
-                            Text("Fetching from demo.mw.dev…")
+                            Text("Fetching from dummyjson.com…")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -110,9 +110,9 @@ struct MenuView: View {
     private func fetchApiProducts() {
         isLoadingApi = true
         apiStatus = ""
-        MiddlewareRum.info("Fetching products from demo.mw.dev API")
+        MiddlewareRum.info("Fetching products from dummyjson.com API")
 
-        guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
+        guard let url = URL(string: "https://dummyjson.com/products?limit=20") else { return }
         URLSession.shared.dataTask(with: url) { data, response, error in
             DispatchQueue.main.async {
                 isLoadingApi = false
