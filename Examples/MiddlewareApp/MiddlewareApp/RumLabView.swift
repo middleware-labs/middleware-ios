@@ -75,7 +75,7 @@ struct RumLabView: View {
 
                 // MARK: Network
                 LabSection(title: "Network Call", icon: "network") {
-                    LabButton(label: "Trigger HTTP GET (demo.mw.dev)", color: .espresso) {
+                    LabButton(label: "Trigger HTTP GET (dummyjson.com)", color: .espresso) {
                         triggerNetworkCall()
                     }
                 }
@@ -166,7 +166,7 @@ struct RumLabView: View {
 
     private func triggerNetworkCall() {
         MiddlewareRum.info("RumLab: triggering manual HTTP call")
-        guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
+        guard let url = URL(string: "https://dummyjson.com/products?limit=20") else { return }
         URLSession.shared.dataTask(with: url) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {

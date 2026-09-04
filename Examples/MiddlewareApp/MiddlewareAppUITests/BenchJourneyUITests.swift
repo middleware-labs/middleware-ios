@@ -36,8 +36,9 @@ final class BenchJourneyUITests: XCTestCase {
         app.launch()
         _ = app.wait(for: .runningForeground, timeout: 30)
         let launchMs = Date().timeIntervalSince(launchStart) * 1000
-        // Parsed by the harness from the xcodebuild log.
-        print(String(format: "MW_BENCH launch_ms=%.0f pid=%d", launchMs, app.processID))
+        // Parsed by the harness from the xcodebuild log. (The harness resolves the
+        // app's pid itself with pgrep — XCUIApplication exposes no process id.)
+        print(String(format: "MW_BENCH launch_ms=%.0f", launchMs))
 
         login(app)
 
@@ -100,15 +101,18 @@ final class BenchJourneyUITests: XCTestCase {
         guard proceedAny.waitForExistence(timeout: 5) else { return }
         proceedAny.tap()
 
-        // Fill whatever text fields the checkout form exposes; payment fields
-        // are .sensitive() so this also exercises v3 masking.
-        let values = ["Bench User", "1 Espresso Way", "4111111111111111", "12/29", "123"]
-        let fields = app.textFields.allElementsBoundByIndex
-        for (i, field) in fields.prefix(values.count).enumerated() {
-            guard field.exists && field.isHittable else { continue }
-            field.tap()
-            field.typeText(values[i])
-        }
+        // Address fields by placeholder, not by index: the form is
+        // Name / Email / Address / Card / MM-YY / CVV, and positional filling
+        // silently shifted every value by one — putting the card number into the
+        // unmasked Delivery Address field while the .sensitive() payment fields
+        // got harmless values, which inverts exactly what the masking run is
+        // supposed to exercise.
+        fill(app, "Full Name", "Bench User")
+        fill(app, "Email Address", "bench@middleware.io")
+        fill(app, "Delivery Address", "1 Espresso Way")
+        fill(app, "Card Number", "4111111111111111")
+        fill(app, "MM/YY", "12/29")
+        fill(app, "CVV", "123")
         dismissKeyboard(app)
 
         let place = app.buttons.matching(
@@ -122,6 +126,20 @@ final class BenchJourneyUITests: XCTestCase {
 
     private func backToMenu(_ app: XCUIApplication) {
         tapIfPresent(app.tabBars.buttons["Menu"])
+    }
+
+    /// Clears the field before typing. `typeText` appends, and the journey runs
+    /// several loops against the same screen, so without this the values pile up
+    /// ("archishBench User").
+    private func fill(_ app: XCUIApplication, _ placeholder: String, _ value: String) {
+        let field = app.textFields[placeholder]
+        guard field.waitForExistence(timeout: 5), field.isHittable else { return }
+        field.tap()
+        // SwiftUI reports the placeholder as the value while the field is empty.
+        if let current = field.value as? String, !current.isEmpty, current != placeholder {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+        }
+        field.typeText(value)
     }
 
     private func tapIfPresent(_ element: XCUIElement) {
