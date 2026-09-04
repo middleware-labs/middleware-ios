@@ -28,51 +28,18 @@
 
 ## Benchmarks
 
-Session-recording capture → JPEG → tar.gz via `RecordingBench` (mirrors the legacy v2 screenshot recorder). As of **2026-07-15**. Production flush size is **10 frames per tar.gz**.
+Real-app benchmark: the Coffee Cart sample driven on a simulator with **v3
+session recording**, SDK **2.2.2**. A mock collector counts exact wire bytes.
 
 ### Production-readiness gate
 
 | Metric | Threshold |
 |---|---|
 | Upload | ≤ 3 MB/min |
-| Avg capture | ≤ 80 ms |
+| Idle upload | ≤ 0.5 MB/min |
+| Cold start Δ | ≤ 250 ms |
 
-### Screenshot capture / encode
-
-| Scenario | Baseline | Avg capture (ms) | tar.gz (bytes) | Frames/tar | Tars/min | MB/min | 1h bytes | 4h tars | Ready |
-|---|---|---|---|---|---|---|---|---|---|
-| idle_recording_off_proxy | recording_off | 3 | 2337 | 10 | 6 | 0.013 | 817889 | 1440 | yes |
-| idle_recording_on_low | recording_on | 28.6 | 10874 | 10 | 6 | 0.062 | 3900703 | 1440 | yes |
-| scroll_recording_on_standard | recording_on | 13 | 12369 | 10 | 18.182 | 0.214 | 13463716 | 4364 | yes |
-| stress_recording_on_high | recording_on | 12.7 | 12459 | 10 | 30 | 0.356 | 22397583 | 7200 | yes |
-
-### Measured tar.gz size (recording on)
-
-| Workload | Frames / tar | Avg frame | JPEG bytes in tar | tar.gz (upload) | Frames / min | Tars / min |
-|---|---:|---:|---:|---:|---:|---:|
-| Default Low quality | 10 | 14335 B (14.0 KB) | 140.0 KB | **10874 B (10.6 KB)** | 60 | **6** |
-| Standard quality | 10 | 15816 B (15.4 KB) | 154.5 KB | **12369 B (12.1 KB)** | 181.8 | **18.182** |
-| High quality (stress) | 10 | 16822 B (16.4 KB) | 164.3 KB | **12459 B (12.2 KB)** | 300 | **30** |
-
-### Measured upload rates (recording on)
-
-| Workload | Bytes / min | MB / min |
-|---|---:|---:|
-| Default Low quality | 65012 B (63.5 KB) | 0.062 |
-| Standard quality | 224395 B (219.1 KB) | 0.214 |
-| High quality (stress) | 373293 B (364.5 KB) | 0.356 |
-
-### Projected session upload (recording on)
-
-Each cell is **tar upload count · total size**.
-
-| Workload | tar.gz each | 5 min | 15 min | 30 min | 1 hour | 2 hours | 4 hours |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Default Low quality | 10.6 KB | 30 × 10.6 KB = 318.6 KB | 90 × 10.6 KB = 955.7 KB | 180 × 10.6 KB = 1.87 MB | 360 × 10.6 KB = 3.73 MB | 720 × 10.6 KB = 7.47 MB | 1440 × 10.6 KB = 14.93 MB |
-| Standard quality | 12.1 KB | 91 × 12.1 KB = 1.07 MB | 273 × 12.1 KB = 3.22 MB | 545 × 12.1 KB = 6.43 MB | 1091 × 12.1 KB = 12.87 MB | 2182 × 12.1 KB = 25.74 MB | 4364 × 12.1 KB = 51.48 MB |
-| High quality (stress) | 12.2 KB | 150 × 12.2 KB = 1.78 MB | 450 × 12.2 KB = 5.35 MB | 900 × 12.2 KB = 10.69 MB | 1800 × 12.2 KB = 21.39 MB | 3600 × 12.2 KB = 42.77 MB | 7200 × 12.2 KB = 85.55 MB |
-
-**Planning:** default Low ≈ 3.7 MB/hour (360 uploads); 4 hours ≈ 14.9 MB (1440 uploads). Real apps vary with UI density and network conditions.
+_Results pending a run of `npm run bench:app:ios`._
 
 ## Setup
             

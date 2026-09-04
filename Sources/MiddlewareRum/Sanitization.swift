@@ -67,15 +67,4 @@ class SensitiveTextField: UITextField {
         }
     }
 }
-
-func getCaptureSettings(for quality: RecordingQuality) -> (captureRate: Double, imgCompression: Double) {
-    switch quality {
-    case .Low:
-        return (captureRate: 1, imgCompression: 0.4)
-    case .Standard:
-        return (captureRate: 0.33, imgCompression: 0.5)
-    case .High:
-        return (captureRate: 0.20, imgCompression: 0.55)
-    }
-}
 #endif

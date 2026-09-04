@@ -36,8 +36,9 @@ final class BenchJourneyUITests: XCTestCase {
         app.launch()
         _ = app.wait(for: .runningForeground, timeout: 30)
         let launchMs = Date().timeIntervalSince(launchStart) * 1000
-        // Parsed by the harness from the xcodebuild log.
-        print(String(format: "MW_BENCH launch_ms=%.0f pid=%d", launchMs, app.processID))
+        // Parsed by the harness from the xcodebuild log. (The harness resolves the
+        // app's pid itself with pgrep — XCUIApplication exposes no process id.)
+        print(String(format: "MW_BENCH launch_ms=%.0f", launchMs))
 
         login(app)
 
