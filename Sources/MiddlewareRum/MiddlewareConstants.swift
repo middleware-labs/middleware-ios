@@ -5,7 +5,7 @@ import Foundation
 enum MiddlewareConstants {
     enum Global {
         static let INSTRUMENTATION_NAME = "middleware-ios"
-        static let VERSION_STRING = "2.2.1"
+        static let VERSION_STRING = "2.2.2"
         static let UNKNOWN_APP_NAME = "unknown-app"
     }
     
@@ -16,7 +16,6 @@ enum MiddlewareConstants {
         static let PROJECT_NAME = "project.name"
         static let RUM_SDK_VERSION = "mw.rum.sdk.version"
         static let RECORDING = "recording"
-        static let RECORDING_V3 = "recordingV3"
         static let DEVICE_MODEL_NAME = "device.model.name"
         static let ERROR = "error"
         static let COUNT = "count"
