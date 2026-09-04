@@ -173,7 +173,7 @@ struct CheckoutView: View {
         ])
 
         // Network call: demonstrates Network Monitoring on checkout path
-        guard let url = URL(string: "https://demo.mw.dev/api/products?currencyCode=USD") else { return }
+        guard let url = URL(string: "https://dummyjson.com/products?limit=20") else { return }
         URLSession.shared.dataTask(with: url) { _, response, error in
             DispatchQueue.main.async {
                 isPlacingOrder = false
