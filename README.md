@@ -28,7 +28,7 @@
 
 ## Benchmarks
 
-Session-recording capture → JPEG → tar.gz via `RecordingBench` (mirrors `ScreenshotManager`). As of **2026-07-15**. Production flush size is **10 frames per tar.gz**.
+Session-recording capture → JPEG → tar.gz via `RecordingBench` (mirrors the legacy v2 screenshot recorder). As of **2026-07-15**. Production flush size is **10 frames per tar.gz**.
 
 ### Production-readiness gate
 

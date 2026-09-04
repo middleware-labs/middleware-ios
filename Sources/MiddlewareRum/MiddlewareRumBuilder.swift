@@ -138,7 +138,7 @@ import Foundation
     }
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
-    /// Sets the v3 session recording options (frequency, image quality,
+    /// Sets the session recording options (frequency, image quality,
     /// masking toggles), mirroring the Android SDK's setRecordingOptions.
     @objc public func recordingOptions(_ options: RecordingOptions) -> MiddlewareRumBuilder {
         self.recordingOptions = options
@@ -146,26 +146,6 @@ import Foundation
     }
 #endif
 
-    /// Disables v3 session recording (rrweb-compatible screenshot events sent
-    /// through the metrics endpoint) and falls back to the legacy (v2)
-    /// screenshot recorder. v3 is enabled by default when recording is on.
-    @objc public func disableSessionRecordingV3() -> MiddlewareRumBuilder {
-        configFlags.disableRecordingV3()
-        return self
-    }
-
-    @objc public func isSessionRecordingV3Enabled() -> Bool {
-        return configFlags.isRecordingEnabled() && configFlags.isRecordingV3Enabled()
-    }
-
-    /// Whether v3 is the configured recorder, independent of whether recording is
-    /// enabled. Unlike `isSessionRecordingV3Enabled()` this does not AND in the
-    /// recording flag, so a `startRecording()` call after a disabled-at-init setup
-    /// still picks v3 rather than falling back to the legacy v2 recorder.
-    @objc public func isRecordingV3Configured() -> Bool {
-        return configFlags.isRecordingV3Enabled()
-    }
-    
     @objc public func isAppLifecycleInstrumentationEnabled() -> Bool {
         return configFlags.isAppLifecycleInstrumentationEnabled()
     }

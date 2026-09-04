@@ -79,7 +79,7 @@ final class RRWebExporterV3Tests: XCTestCase {
             resourceAttributesProvider: { sessionId in
                 [
                     "mw.rum": "true",
-                    "recordingV3": "1",
+                    "recording": "1",
                     "session.id": sessionId,
                 ]
             },
@@ -149,7 +149,7 @@ final class RRWebExporterV3Tests: XCTestCase {
 
         let body = try decodeBody(request)
         let attrs = try resourceAttributes(in: body)
-        XCTAssertEqual(attrs["recordingV3"], "1")
+        XCTAssertEqual(attrs["recording"], "1")
         XCTAssertEqual(attrs["session.id"], "session-1")
 
         let allMetrics = try metrics(in: body)

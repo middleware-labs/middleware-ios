@@ -40,7 +40,7 @@ final class RecordingBenchmarkTests: XCTestCase {
         for (quality, sanitize, scenario) in matrix {
             let metrics = try RecordingBench.run(
                 scenario: scenario,
-                frames: 10, // matches ScreenshotManager flush (screenshots.count >= 10)
+                frames: 10, // matches the legacy v2 recorder's flush (screenshots.count >= 10)
                 quality: quality,
                 sanitize: sanitize
             )
@@ -165,7 +165,7 @@ final class RecordingBenchmarkTests: XCTestCase {
             "verdict": [
                 "ready_for_prod": readyChecks.isEmpty,
                 "failed_checks": readyChecks,
-                "notes": ["synthetic UIWindow hierarchy — mirrors ScreenshotManager hot path"],
+                "notes": ["synthetic UIWindow hierarchy — mirrors the legacy v2 recorder hot path"],
             ],
         ]
     }

@@ -10,7 +10,6 @@ class ConfigFlags {
     var crashReportingEnabled: Bool = true
     var uiInstrumentationEnabled: Bool = true
     var recordingEnabled: Bool = true
-    var recordingV3Enabled: Bool = true
 
     init () {}
     
@@ -50,14 +49,6 @@ class ConfigFlags {
         return self.recordingEnabled
     }
 
-    func disableRecordingV3() {
-        self.recordingV3Enabled = false
-    }
-
-    func isRecordingV3Enabled() -> Bool {
-        return self.recordingV3Enabled
-    }
-    
     func isSlowRenderingEnabled()  -> Bool {
         return slowRenderingDetectionEnabled
     }

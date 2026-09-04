@@ -5,7 +5,8 @@ import UIKit
 import Foundation
 import SWCompression
 
-/// Capture / encode micro-benchmark that mirrors `ScreenshotManager` without uploading.
+/// Capture / encode micro-benchmark that mirrors the legacy v2 screenshot
+/// recorder's hot path without uploading.
 public struct RecordingBenchMetrics: Codable {
     public let scenario: String
     public let quality: String
