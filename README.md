@@ -39,7 +39,36 @@ session recording**, SDK **2.2.2**. A mock collector counts exact wire bytes.
 | Idle upload | ≤ 0.5 MB/min |
 | Cold start Δ | ≤ 250 ms |
 
-_Results pending a run of `npm run bench:app:ios`._
+### Real app (Coffee Cart on simulator)
+
+An XCUITest drives a scripted journey (login → browse → product → add to cart
+→ checkout, 3 loops) and a 60s idle hold, as of **2026-09-04**. Device
+iPhone 17 simulator; the gate compares `recording_on` against `sdk_off`.
+
+| Scenario | Baseline | CPU avg (%) | Peak RSS (MB) | Upload (B) | MB/min | rrweb events | Ready |
+|---|---|---:|---:|---:|---:|---:|---|
+| journey | sdk_off | 6.0 | 347.7 | 0 | 0 | 0 | yes |
+| idle | sdk_off | 0.0 | 251.5 | 0 | 0 | 0 | yes |
+| journey | recording_off | 9.4 | 399.5 | 72194 | 0.029 | 0 | yes |
+| idle | recording_off | 0.4 | 306.0 | 6928 | 0.006 | 0 | yes |
+| journey | recording_on | 16.0 | 413.8 | 2649649 | 1.047 | 96 | yes |
+| idle | recording_on | 0.4 | 313.9 | 185388 | 0.154 | 5 | yes |
+
+**What recording costs.** Against `recording_off` on the same journey, v3 session
+recording adds **6.6 points of average CPU** (9.4% → 16.0%) and **14 MB of peak
+RSS**, and uploads **1.047 MB/min** — about a third of the 3 MB/min gate. Idle
+recording costs **0.154 MB/min** against a 0.5 MB/min gate.
+
+Payment fields on the checkout screen are marked `.sensitive()`, so this journey
+also exercises v3 masking on a real card number, expiry and CVV.
+
+**Two things this suite does not measure.** App bundle size is byte-identical
+across variants — the SDK is linked in every build and the baseline only skips
+initialisation — so measure a release IPA with and without the dependency
+instead. Cold start is also not comparable: `simctl launch` returns when the
+process is spawned rather than at first frame, and reports the same value for
+every variant. RSS figures are host-process values on a macOS simulator and
+include simulator overhead, so only the deltas between variants are meaningful.
 
 ## Setup
             
