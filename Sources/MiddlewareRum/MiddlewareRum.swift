@@ -47,15 +47,13 @@ public enum CheckState {
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
         middlewareRumInitTime = Date()
 
+        let otlpConfig = OtlpConfiguration(
+            timeout: TimeInterval(10000),
+            headers: otlpExportHeaders(token: builder.rumAccessToken!)
+        )
         let otlpTraceExporter = OtlpHttpTraceExporter(
             endpoint: URL(string: builder.target! + "/v1/traces")!,
-            config: OtlpConfiguration(timeout: TimeInterval(10000),
-                                      headers: [
-                                        ("Authorization", builder.rumAccessToken!),
-                                        ("Origin","sdk.middleware.io"),
-                                        ("Access-Control-Allow-Headers", "*")
-                                      ]
-                                     )
+            config: otlpConfig
         )
         rawSpanExporter = otlpTraceExporter
         let resource = createMiddlewareResource(builder: builder)
@@ -72,12 +70,7 @@ public enum CheckState {
         
         let otlpLogExporter = OtlpHttpLogExporter(
             endpoint: URL(string: builder.target! + "/v1/logs")!,
-            config:  OtlpConfiguration(timeout: TimeInterval(10000),
-                                       headers:[
-                                        ("Origin", "sdk.middleware.io"),
-                                        ("Access-Control-Allow-Headers", "*")
-                                       ]
-                                      )
+            config: otlpConfig
         )
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: LoggerProviderBuilder()
@@ -370,6 +363,14 @@ public enum CheckState {
         
     }
     
+    class func otlpExportHeaders(token: String) -> [(String, String)] {
+        [
+            ("Authorization", token),
+            ("Origin", "sdk.middleware.io"),
+            ("Access-Control-Allow-Headers", "*")
+        ]
+    }
+
     class func createMiddlewareResource(builder: MiddlewareRumBuilder) -> Resource {
         
         var app = Bundle.main.infoDictionary?["CFBundleName"] as? String
@@ -583,10 +584,16 @@ public enum CheckState {
     /// Send trace log message.
     /// - Parameters:
     ///   - message: message that you like to log
-    ///   - metadata: optional dditional information with log
-    public class func trace(_ message: String, _ metadata: [String: String]? = nil) {
+    ///   - metadata: optional additional information with log
+    public class func trace(_ message: String, metadata: [String: String]? = nil) {
         Log.trace(message)
         MiddlewareRum.log(message: message, severity: .trace, metadata: metadata ?? [:])
+    }
+
+    /// Unlabeled metadata overload kept for source compatibility.
+    @available(*, deprecated, renamed: "trace(_:metadata:)")
+    public class func trace(_ message: String, _ metadata: [String: String]?) {
+        trace(message, metadata: metadata)
     }
     
     /// Send info log message.
@@ -629,9 +636,15 @@ public enum CheckState {
     /// - Parameters:
     ///   - message: message that you like to log
     ///   - metadata: optional additional information with log
-    public class func crtical(_ message: String, metadata: [String: String]? = nil) {
+    public class func critical(_ message: String, metadata: [String: String]? = nil) {
         Log.error(message)
         MiddlewareRum.log(message: message, severity: .fatal, metadata: metadata ?? [:])
+    }
+
+    /// Misspelled alias kept for source compatibility.
+    @available(*, deprecated, renamed: "critical")
+    public class func crtical(_ message: String, metadata: [String: String]? = nil) {
+        critical(message, metadata: metadata)
     }
 
 #if os(iOS) || targetEnvironment(macCatalyst)
