@@ -20,6 +20,12 @@ final class MiddlewareRumTests: XCTestCase {
         XCTAssertFalse(builder.isRecordingEnabled())
     }
 
+    func testOtlpExportHeadersIncludeAuthorizationForLogsAndTraces() {
+        let headers = MiddlewareRum.otlpExportHeaders(token: "rum-token")
+        XCTAssertEqual(headers.first(where: { $0.0 == "Authorization" })?.1, "rum-token")
+        XCTAssertEqual(headers.first(where: { $0.0 == "Origin" })?.1, "sdk.middleware.io")
+    }
+
     func testResourceCarriesBrowserTraceAndRecordingFlags() {
         let builder = MiddlewareRumBuilder()
             .target("https://example.middleware.io")
