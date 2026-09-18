@@ -35,26 +35,29 @@ class URLSessionLogger {
 
         var attributes = [String: AttributeValue]()
 
-        attributes[SemanticAttributes.httpMethod.rawValue] = AttributeValue.string(request.httpMethod ?? "unknown_method")
+        // Current HTTP semantic conventions (1.21+). This used to emit the
+        // deprecated http.method, http.url, http.target, net.peer.name,
+        // http.scheme and net.peer.port.
+        attributes[SemanticAttributes.httpRequestMethod.rawValue] = AttributeValue.string(request.httpMethod ?? "unknown_method")
 
         if let requestURL = request.url {
-            attributes[SemanticAttributes.httpUrl.rawValue] = AttributeValue.string(requestURL.absoluteString)
+            attributes[SemanticAttributes.urlFull.rawValue] = AttributeValue.string(requestURL.absoluteString)
         }
 
         if let requestURLPath = request.url?.path {
-            attributes[SemanticAttributes.httpTarget.rawValue] = AttributeValue.string(requestURLPath)
+            attributes[SemanticAttributes.urlPath.rawValue] = AttributeValue.string(requestURLPath)
         }
 
         if let host = request.url?.host {
-            attributes[SemanticAttributes.netPeerName.rawValue] = AttributeValue.string(host)
+            attributes[SemanticAttributes.serverAddress.rawValue] = AttributeValue.string(host)
         }
 
         if let requestScheme = request.url?.scheme {
-            attributes[SemanticAttributes.httpScheme.rawValue] = AttributeValue.string(requestScheme)
+            attributes[SemanticAttributes.urlScheme.rawValue] = AttributeValue.string(requestScheme)
         }
 
         if let port = request.url?.port {
-            attributes[SemanticAttributes.netPeerPort.rawValue] = AttributeValue.int(port)
+            attributes[SemanticAttributes.serverPort.rawValue] = AttributeValue.int(port)
         }
         
         if let bodySize = request.httpBody?.count {
@@ -106,7 +109,7 @@ class URLSessionLogger {
         }
 
         let statusCode = httpResponse.statusCode
-        span.setAttribute(key: SemanticAttributes.httpStatusCode.rawValue, 
+        span.setAttribute(key: SemanticAttributes.httpResponseStatusCode.rawValue,
                           value: AttributeValue.int(statusCode))
         span.status = statusForStatusCode(code: statusCode)
 
@@ -129,7 +132,7 @@ class URLSessionLogger {
         guard span != nil else {
             return
         }
-        span.setAttribute(key: SemanticAttributes.httpStatusCode.rawValue, value: AttributeValue.int(statusCode))
+        span.setAttribute(key: SemanticAttributes.httpResponseStatusCode.rawValue, value: AttributeValue.int(statusCode))
         span.status = URLSessionLogger.statusForStatusCode(code: statusCode)
         instrumentation.configuration.receivedError?(error, dataOrFile, statusCode, span)
 
