@@ -75,13 +75,13 @@ include simulator overhead, so only the deltas between variants are meaningful.
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.1.2"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.2.2"),
 ```
 
 ## Using Cocoapods
 
 ```ruby
-pod "MiddlewareRum", "~> 2.1.2"
+pod "MiddlewareRum", "~> 2.2.2"
 ```
 
 ## Initialization of Middleware iOS sdk
