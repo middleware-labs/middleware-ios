@@ -8,20 +8,20 @@ final class RecordingOptionsTests: XCTestCase {
         let options = RecordingOptions()
         XCTAssertEqual(options.frequency, .low)
         XCTAssertEqual(options.quality, .Standard)
-        XCTAssertTrue(options.maskAllTextInputs)
-        XCTAssertTrue(options.maskAllImages)
+        XCTAssertFalse(options.maskAllTextInputs)
+        XCTAssertFalse(options.maskAllImages)
     }
 
     func testFluentSetters() {
         let options = RecordingOptions()
             .setFrequency(.high)
             .setQuality(.High)
-            .setMaskAllTextInputs(false)
-            .setMaskAllImages(false)
+            .setMaskAllTextInputs(true)
+            .setMaskAllImages(true)
         XCTAssertEqual(options.frequency, .high)
         XCTAssertEqual(options.quality, .High)
-        XCTAssertFalse(options.maskAllTextInputs)
-        XCTAssertFalse(options.maskAllImages)
+        XCTAssertTrue(options.maskAllTextInputs)
+        XCTAssertTrue(options.maskAllImages)
     }
 
     func testFrequencyIntervals() {
