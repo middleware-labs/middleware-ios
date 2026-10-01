@@ -377,9 +377,11 @@ public enum CheckState {
         if app == "" {
             app = MiddlewareConstants.Global.UNKNOWN_APP_NAME
         }
+        let sdkVersion = builder.globalAttributes?[MiddlewareConstants.Attributes.RUM_SDK_VERSION] as? String
+            ?? MiddlewareConstants.Global.VERSION_STRING
         var defaultResource = DefaultResources().get()
         defaultResource.merge(other: Resource(attributes: [
-            MiddlewareConstants.Attributes.RUM_SDK_VERSION: AttributeValue(MiddlewareConstants.Global.VERSION_STRING),
+            MiddlewareConstants.Attributes.RUM_SDK_VERSION: AttributeValue(sdkVersion),
             MiddlewareConstants.Attributes.APP: AttributeValue(app!),
             ResourceAttributes.serviceName.rawValue : AttributeValue(builder.serviceName!),
             MiddlewareConstants.Attributes.MW_RUM: AttributeValue("true"),

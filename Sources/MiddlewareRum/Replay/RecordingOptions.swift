@@ -23,11 +23,16 @@ import UIKit
 /// Options for v3 session recording, mirroring the Android SDK's
 /// RecordingOptions: capture frequency, image quality and masking toggles.
 /// Reuses the existing `RecordingQuality` enum.
+///
+/// Masking defaults match the browser SDK: the screen is recorded as-is and
+/// only secure/sensitive inputs (passwords, OTP, card numbers, ...) are
+/// masked. Opt into broader masking with the setters below or per view with
+/// the `mw-no-capture` accessibility token.
 @objc public class RecordingOptions: NSObject {
     @objc public private(set) var frequency: RecordingFrequency = .low
     @objc public private(set) var quality: RecordingQuality = .Standard
-    @objc public private(set) var maskAllTextInputs: Bool = true
-    @objc public private(set) var maskAllImages: Bool = true
+    @objc public private(set) var maskAllTextInputs: Bool = false
+    @objc public private(set) var maskAllImages: Bool = false
 
     @objc public override init() {}
 
@@ -46,14 +51,14 @@ import UIKit
     }
 
     /// Masks every text element in v3 session recording. When disabled, only
-    /// secure/sensitive inputs are masked. Default is `true`.
+    /// secure/sensitive inputs are masked. Default is `false`.
     @discardableResult
     @objc(withMaskAllTextInputs:) public func setMaskAllTextInputs(_ maskAllTextInputs: Bool) -> RecordingOptions {
         self.maskAllTextInputs = maskAllTextInputs
         return self
     }
 
-    /// Masks image content in v3 session recording. Default is `true`.
+    /// Masks image content in v3 session recording. Default is `false`.
     @discardableResult
     @objc(withMaskAllImages:) public func setMaskAllImages(_ maskAllImages: Bool) -> RecordingOptions {
         self.maskAllImages = maskAllImages

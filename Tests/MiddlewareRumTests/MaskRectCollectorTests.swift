@@ -1,6 +1,9 @@
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 import XCTest
 import UIKit
+#if os(iOS) || targetEnvironment(macCatalyst)
+import WebKit
+#endif
 @testable import MiddlewareRum
 
 final class MaskRectCollectorTests: XCTestCase {
@@ -103,6 +106,31 @@ final class MaskRectCollectorTests: XCTestCase {
         let rects = collector.collect(in: window, sanitized: [plain])
         XCTAssertEqual(rects.count, 1)
     }
+
+    func testDefaultsMaskOnlySensitiveInputs() {
+        let label = UILabel()
+        label.text = "hello"
+        let plainField = UITextField()
+        plainField.text = "search query"
+        let cardField = UITextField()
+        cardField.textContentType = .creditCardNumber
+        cardField.text = "4111 1111 1111 1111"
+        let window = makeWindow(with: [label, plainField, cardField])
+
+        let rects = MaskRectCollector().collect(in: window, sanitized: [])
+        XCTAssertEqual(rects.count, 1, "only the card number field should be masked")
+    }
+
+    #if os(iOS) || targetEnvironment(macCatalyst)
+    func testWebViewRecordedByDefaultAndMaskedOnOptIn() {
+        let webView = WKWebView()
+        let window = makeWindow(with: [webView])
+
+        XCTAssertEqual(MaskRectCollector().collect(in: window, sanitized: []).count, 0)
+        XCTAssertEqual(MaskRectCollector(maskAllTextInputs: true, maskAllImages: false)
+            .collect(in: window, sanitized: []).count, 1)
+    }
+    #endif
 
     func testRenderScaleCapsShortEdge() {
         // iPhone-sized window at 3x native scale gets capped near 640/393

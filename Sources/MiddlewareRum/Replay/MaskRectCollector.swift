@@ -18,7 +18,9 @@ import WebKit
 ///  - UILabel/UIButton with text masked when `maskAllTextInputs`;
 ///  - UIImageView masked when `maskAllImages`, unless the image comes from the
 ///    asset catalog or is an SF Symbol (app chrome, not user content);
-///  - WKWebView masked whole whenever any masking is on (content is opaque to us);
+///  - WKWebView masked whole when `maskAllTextInputs` or `maskAllImages` is on
+///    (content is opaque to us); both are off by default, so web content is
+///    recorded unless the app opts in or tags the view `mw-no-capture`;
 ///  - `_UIRemoteView` (out-of-process camera/photo/contact pickers) always masked;
 ///  - UIPickerView masked under `maskAllTextInputs`;
 ///  - SwiftUI text/images detected via nil-safe class-name tables;
@@ -32,14 +34,25 @@ class MaskRectCollector {
     private let maskAllTextInputs: Bool
     private let maskAllImages: Bool
 
-    private static let sensitiveContentTypes: Set<UITextContentType> = [
-        .password, .newPassword, .oneTimeCode,
-        .creditCardNumber, .telephoneNumber, .emailAddress,
-        .username, .URL, .name, .nickname, .middleName, .familyName,
-        .nameSuffix, .namePrefix, .organizationName, .location,
-        .fullStreetAddress, .streetAddressLine1, .streetAddressLine2,
-        .addressCity, .addressState, .addressCityAndState, .postalCode,
-    ]
+    private static let sensitiveContentTypes: Set<UITextContentType> = {
+        var types: Set<UITextContentType> = [
+            .password, .newPassword, .oneTimeCode,
+            .creditCardNumber, .telephoneNumber, .emailAddress,
+            .username, .URL, .name, .nickname, .middleName, .familyName,
+            .nameSuffix, .namePrefix, .organizationName, .location,
+            .fullStreetAddress, .streetAddressLine1, .streetAddressLine2,
+            .addressCity, .addressState, .addressCityAndState, .postalCode,
+        ]
+        if #available(iOS 17.0, tvOS 17.0, macCatalyst 17.0, *) {
+            types.formUnion([
+                .creditCardSecurityCode, .creditCardExpiration,
+                .creditCardExpirationMonth, .creditCardExpirationYear,
+                .creditCardName, .creditCardGivenName, .creditCardMiddleName,
+                .creditCardFamilyName, .creditCardType,
+            ])
+        }
+        return types
+    }()
 
     // SwiftUI renders text/images into private UIKit views/layers; these
     // class-name tables are nil-safe (missing classes on a given OS version
@@ -61,7 +74,7 @@ class MaskRectCollector {
 
     private static let remoteViewClass: AnyClass? = NSClassFromString("_UIRemoteView")
 
-    init(maskAllTextInputs: Bool = true, maskAllImages: Bool = true) {
+    init(maskAllTextInputs: Bool = false, maskAllImages: Bool = false) {
         self.maskAllTextInputs = maskAllTextInputs
         self.maskAllImages = maskAllImages
     }
