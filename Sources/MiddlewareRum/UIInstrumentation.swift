@@ -188,6 +188,7 @@ class UIInstrumentation {
         abracadabra(clazz: UIViewController.self, orig: #selector(UIViewController.viewDidDisappear(_:)), swoosh: #selector(UIViewController.abracadabra_viewDidDisappear(_:)))
 
         startTapHeatmapCapture()
+        ScreenViews.shared.install()
     }
 }
 
