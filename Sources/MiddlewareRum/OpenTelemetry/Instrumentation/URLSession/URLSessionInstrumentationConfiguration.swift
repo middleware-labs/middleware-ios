@@ -68,4 +68,12 @@ public struct URLSessionInstrumentationConfiguration {
     
     ///  The array of URLSession delegate classes that will be instrumented by the library, will autodetect if nil is passed.
     public var delegateClassesToInstrument: [AnyClass]?
+
+    /// When recording payloads on the delegate path, stop buffering once this many bytes have been
+    /// collected for a task. nil buffers the whole response.
+    public var maxRecordedPayloadBytes: Int?
+
+    /// When recording payloads on the delegate path, consulted with the task's response before
+    /// buffering its data; returning false skips buffering for that task. nil buffers every response.
+    public var shouldRecordPayloadForResponse: ((URLResponse?) -> Bool)?
 }

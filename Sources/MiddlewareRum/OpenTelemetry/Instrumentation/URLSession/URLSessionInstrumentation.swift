@@ -19,6 +19,8 @@ struct NetworkRequestState {
 }
 
 private var idKey: Void?
+/// Set on tasks whose response is logged by our completion-handler wrapper.
+private var completionHandlerKey: Void?
 
 public class URLSessionInstrumentation {
     private var requestMap = [String: NetworkRequestState]()
@@ -254,6 +256,7 @@ public class URLSessionInstrumentation {
                         completionBlock = completionWrapper
                     }
                 }
+                let wrapsCompletion = completion != nil && objc_getAssociatedObject(argument, &idKey) == nil
 
                 if let request = argument as? URLRequest, objc_getAssociatedObject(argument, &idKey) == nil {
                     let instrumentedRequest = URLSessionLogger.processAndLogRequest(request, sessionTaskId: sessionTaskId, instrumentation: self, shouldInjectHeaders: true)
@@ -266,6 +269,9 @@ public class URLSessionInstrumentation {
                     }
                 }
                 self.setIdKey(value: sessionTaskId, for: task)
+                if wrapsCompletion {
+                    self.markCompletionHandled(task)
+                }
                 return task
             }
             let swizzledIMP = imp_implementationWithBlock(unsafeBitCast(block, to: AnyObject.self))
@@ -317,6 +323,9 @@ public class URLSessionInstrumentation {
                 task = castedIMP(session, selector, processedRequest ?? request, argument, completionBlock)
 
                 self.setIdKey(value: sessionTaskId, for: task)
+                if completion != nil && objc_getAssociatedObject(argument, &idKey) == nil {
+                    self.markCompletionHandled(task)
+                }
                 return task
             }
             let swizzledIMP = imp_implementationWithBlock(unsafeBitCast(block, to: AnyObject.self))
@@ -496,17 +505,28 @@ public class URLSessionInstrumentation {
     // URLSessionTask methods
     private func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         guard configuration.shouldRecordPayload?(session) ?? false else { return }
+        if let shouldRecordResponse = configuration.shouldRecordPayloadForResponse,
+           !shouldRecordResponse(dataTask.response) {
+            return
+        }
         guard let taskId = objc_getAssociatedObject(dataTask, &idKey) as? String else {
             return
         }
-        let dataCopy = data
+        let maxBytes = configuration.maxRecordedPayloadBytes
         queue.sync {
             if (requestMap[taskId]?.request) != nil {
                 createRequestState(for: taskId)
                 if requestMap[taskId]?.dataProcessed == nil {
                     requestMap[taskId]?.dataProcessed = Data()
                 }
-                requestMap[taskId]?.dataProcessed?.append(dataCopy)
+                if let maxBytes = maxBytes {
+                    let remaining = maxBytes - (requestMap[taskId]?.dataProcessed?.count ?? 0)
+                    if remaining > 0 {
+                        requestMap[taskId]?.dataProcessed?.append(data.prefix(remaining))
+                    }
+                } else {
+                    requestMap[taskId]?.dataProcessed?.append(data)
+                }
             }
         }
     }
@@ -522,7 +542,11 @@ public class URLSessionInstrumentation {
                 if response.expectedContentLength < 0 {
                     requestMap[taskId]?.dataProcessed = Data()
                 } else {
-                    requestMap[taskId]?.dataProcessed = Data(capacity: Int(response.expectedContentLength))
+                    var capacity = Int(response.expectedContentLength)
+                    if let maxBytes = configuration.maxRecordedPayloadBytes {
+                        capacity = min(capacity, maxBytes)
+                    }
+                    requestMap[taskId]?.dataProcessed = Data(capacity: capacity)
                 }
             }
         }
@@ -538,6 +562,9 @@ public class URLSessionInstrumentation {
             if requestState != nil {
                 requestMap[taskId] = nil
             }
+        }
+        if deferToCompletionHandler(session: session, task: task) {
+            return
         }
         if let error = error {
             let status = (task.response as? HTTPURLResponse)?.statusCode ?? 0
@@ -568,6 +595,10 @@ public class URLSessionInstrumentation {
         }
 
         guard requestState?.request != nil else {
+            return
+        }
+
+        if deferToCompletionHandler(session: session, task: task) {
             return
         }
 
@@ -621,6 +652,18 @@ public class URLSessionInstrumentation {
             objc_setAssociatedObject(task, &idKey, id, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         return id!
+    }
+
+    private func markCompletionHandled(_ task: URLSessionTask) {
+        objc_setAssociatedObject(task, &completionHandlerKey, true, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    /// A task created with a completion handler can still report metrics/completion to the session
+    /// delegate, and that arrives before the handler runs. Only the handler has the response data,
+    /// so when payloads are being recorded let the handler end the span instead.
+    private func deferToCompletionHandler(session: URLSession, task: URLSessionTask) -> Bool {
+        guard configuration.shouldRecordPayload?(session) ?? false else { return false }
+        return objc_getAssociatedObject(task, &completionHandlerKey) as? Bool == true
     }
 
     private func setIdKey(value: String, for task: URLSessionTask) {

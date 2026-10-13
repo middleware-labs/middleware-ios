@@ -103,7 +103,11 @@ public enum CheckState {
         
         if(builder.isNetworkMonitoringEnabled()) {
             _ = initializeNetworkMonitoring(
-                tracePropagationTargets: builder.tracePropagationTargets)
+                tracePropagationTargets: builder.tracePropagationTargets,
+                networkCapture: NetworkCapture(
+                    captureHeaders: builder.isNetworkHeadersCaptureEnabled(),
+                    captureResponseBodies: builder.isResponseBodyCaptureEnabled(),
+                    ignoredHeaders: builder.ignoredHeaders))
         }
         
         if(builder.isSlowRenderingDetectionEnabled()) {
@@ -398,9 +402,26 @@ public enum CheckState {
     }
     
     class func initializeNetworkMonitoring(
-        tracePropagationTargets: [NSRegularExpression]? = nil
+        tracePropagationTargets: [NSRegularExpression]? = nil,
+        networkCapture: NetworkCapture? = nil
     ) -> URLSessionInstrumentation {
-        return URLSessionInstrumentation(configuration: URLSessionInstrumentationConfiguration(
+        return URLSessionInstrumentation(configuration: networkMonitoringConfiguration(
+            tracePropagationTargets: tracePropagationTargets,
+            networkCapture: networkCapture))
+    }
+
+    class func networkMonitoringConfiguration(
+        tracePropagationTargets: [NSRegularExpression]? = nil,
+        networkCapture: NetworkCapture? = nil
+    ) -> URLSessionInstrumentationConfiguration {
+        // Only hand hooks to the instrumentation when capture is on, so the default path is
+        // exactly what it was before header/body capture existed.
+        let capture = (networkCapture?.isEnabled ?? false) ? networkCapture : nil
+        let captureBodies = capture?.captureResponseBodies ?? false
+
+        var configuration = URLSessionInstrumentationConfiguration(
+            // Delegate-based tasks only buffer response data when this returns true.
+            shouldRecordPayload: captureBodies ? { _ in true } : nil,
             shouldInstrument: { URLRequest in
                 guard let url = URLRequest.url?.absoluteString else {
                     return true
@@ -429,11 +450,37 @@ public enum CheckState {
                 let range = NSRange(url.startIndex..., in: url)
                 return targets.contains { $0.firstMatch(in: url, range: range) != nil }
             },
+            // Called with the request as sent, i.e. including trace headers the SDK injected.
+            createdRequest: capture.map { capture in
+                { request, span in
+                    for (key, value) in capture.requestHeaderAttributes(request) {
+                        span.setAttribute(key: key, value: value)
+                    }
+                }
+            },
+            receivedResponse: capture.map { capture in
+                { response, dataOrFile, span in
+                    if let httpResponse = response as? HTTPURLResponse {
+                        for (key, value) in capture.responseHeaderAttributes(httpResponse) {
+                            span.setAttribute(key: key, value: value)
+                        }
+                    }
+                    if let body = capture.responseBody(response: response, dataOrFile: dataOrFile) {
+                        span.setAttribute(key: NetworkCapture.responseBodyKey, value: body)
+                    }
+                }
+            },
             receivedError: { (error: Error, _: DataOrFile?, status: HTTPStatus, span: Span) in
                 span.addEvent(name: "error", attributes: ["description" : AttributeValue(error.localizedDescription)])
             }
         )
-        )
+        if captureBodies {
+            // Bound the delegate-path buffer to what will actually be recorded, and skip
+            // buffering responses whose content type will never be recorded.
+            configuration.maxRecordedPayloadBytes = NetworkCapture.maxResponseBodyBytes + 4
+            configuration.shouldRecordPayloadForResponse = { NetworkCapture.isCapturableResponse($0) }
+        }
+        return configuration
     }
     
     class func initializeNetworkTypeMonitoring() {

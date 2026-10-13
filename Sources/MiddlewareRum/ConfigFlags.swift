@@ -10,6 +10,8 @@ class ConfigFlags {
     var crashReportingEnabled: Bool = true
     var uiInstrumentationEnabled: Bool = true
     var recordingEnabled: Bool = true
+    var networkHeadersCaptureEnabled: Bool = false
+    var responseBodyCaptureEnabled: Bool = false
 
     init () {}
     
@@ -43,6 +45,22 @@ class ConfigFlags {
     
     func enableRecording() {
         self.recordingEnabled = true
+    }
+
+    func setNetworkHeadersCapture(_ enabled: Bool) {
+        self.networkHeadersCaptureEnabled = enabled
+    }
+
+    func setResponseBodyCapture(_ enabled: Bool) {
+        self.responseBodyCaptureEnabled = enabled
+    }
+
+    func isNetworkHeadersCaptureEnabled() -> Bool {
+        return networkHeadersCaptureEnabled
+    }
+
+    func isResponseBodyCaptureEnabled() -> Bool {
+        return responseBodyCaptureEnabled
     }
 
     func isRecordingEnabled() -> Bool {
