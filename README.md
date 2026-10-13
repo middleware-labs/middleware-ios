@@ -75,13 +75,13 @@ include simulator overhead, so only the deltas between variants are meaningful.
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.2.2"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.3.0"),
 ```
 
 ## Using Cocoapods
 
 ```ruby
-pod "MiddlewareRum", "~> 2.2.2"
+pod "MiddlewareRum", "~> 2.3.0"
 ```
 
 ## Initialization of Middleware iOS sdk
@@ -210,6 +210,30 @@ Methods that can be used for setting instrumentation & configure your applicatio
                 Restricts which outbound request URLs carry <code>traceparent</code>. By default every URL does. See <a href="#distributed-tracing">Distributed Tracing</a>.
             </td>
         </tr>
+        <tr>
+            <td>
+                <code lang="swift">.captureNetworkHeaders(Bool)</code>
+            </td>
+            <td>
+                Records request and response headers on network spans. Off by default. See <a href="#capturing-headers-and-response-bodies">Capturing headers and response bodies</a>.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <code lang="swift">.captureResponseBodies(Bool)</code>
+            </td>
+            <td>
+                Records JSON and plain-text response bodies (up to 64 KiB) on network spans. Off by default.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <code lang="swift">.ignoreHeaders([String])</code>
+            </td>
+            <td>
+                Header names (case-insensitive) that are never recorded. Empty by default.
+            </td>
+        </tr>
     </tbody>
 </table>
 
@@ -248,6 +272,35 @@ propagation entirely.
 In the session explorer, open a network event and check that the backend trace resolves. If the
 RUM span carries a trace ID but no backend spans appear, the request propagated correctly and the
 gap is on the backend side — confirm that service is instrumented and accepts W3C trace context.
+
+### Capturing headers and response bodies
+
+Header and body capture are opt-in and off by default. Turn on either or both:
+
+```swift
+MiddlewareRumBuilder()
+    // ... other configuration
+    .captureNetworkHeaders(true)
+    .captureResponseBodies(true)
+    .ignoreHeaders(["Authorization", "Cookie", "Set-Cookie"])
+    .build()
+```
+
+- **Headers** are recorded as `http.request.header.<name>` and `http.response.header.<name>`, where
+  `<name>` is the header name lowercased with `-` replaced by `_` (`Content-Type` becomes
+  `http.response.header.content_type`). Request headers are the ones on the request as sent,
+  including the `traceparent` header the SDK adds. The value of `x-access-token` is always masked
+  as `********`. Headers listed in `ignoreHeaders` are never recorded. Nothing is redacted beyond
+  that, so list any credential headers your app sends.
+- **Response bodies** are recorded as `http.response.body` when the response `Content-Type` is
+  `application/json`, any `+json` type, or `text/plain`. Bodies are truncated to 64 KiB and empty
+  bodies are skipped. What your app receives is never modified. Request bodies are never recorded.
+
+Bodies are captured for completion-handler tasks (`dataTask(with:completionHandler:)`,
+`uploadTask(with:from:completionHandler:)`) and for delegate-based data tasks (including libraries
+built on them, such as Alamofire). They are not captured for the async/await APIs
+(`data(for:)`, `data(from:)`, `upload(for:from:)`), because URLSession does not expose the response
+data to the SDK on that path, or for download tasks. Headers are captured on every path.
 
 ### Logging using Middleware API
 

@@ -15,6 +15,8 @@ import Foundation
     /// Compiled `tracePropagationTargets`. `nil` means propagate to every URL, which is the
     /// default and matches the browser SDK; an empty array means propagate to none.
     public private(set) var tracePropagationTargets: [NSRegularExpression]?
+    /// Header names (case-insensitive) that `captureNetworkHeaders` never records.
+    public private(set) var ignoredHeaders: [String] = []
     private var configFlags: ConfigFlags
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
     public var recordingOptions = RecordingOptions()
@@ -99,6 +101,38 @@ import Foundation
         return configFlags.isNetworkMonitoringEnabled()
     }
     
+    /// Records request and response headers on network spans as
+    /// `http.request.header.<name>` / `http.response.header.<name>`, where `<name>` is the header
+    /// name lowercased with `-` replaced by `_`. The value of `x-access-token` is masked.
+    /// Off by default. Use `ignoreHeaders(_:)` to keep specific headers (e.g. `Authorization`,
+    /// `Cookie`) out of telemetry.
+    @objc public func captureNetworkHeaders(_ enabled: Bool) -> MiddlewareRumBuilder {
+        configFlags.setNetworkHeadersCapture(enabled)
+        return self
+    }
+
+    @objc public func isNetworkHeadersCaptureEnabled() -> Bool {
+        return configFlags.isNetworkHeadersCaptureEnabled()
+    }
+
+    /// Records response bodies on network spans as `http.response.body`, for responses whose
+    /// Content-Type is `application/json`, `*+json` or `text/plain`. Bodies are truncated to
+    /// 64 KiB. Request bodies are never recorded. Off by default.
+    @objc public func captureResponseBodies(_ enabled: Bool) -> MiddlewareRumBuilder {
+        configFlags.setResponseBodyCapture(enabled)
+        return self
+    }
+
+    @objc public func isResponseBodyCaptureEnabled() -> Bool {
+        return configFlags.isResponseBodyCaptureEnabled()
+    }
+
+    /// Header names (case-insensitive) that are never recorded by `captureNetworkHeaders(_:)`.
+    @objc public func ignoreHeaders(_ names: [String]) -> MiddlewareRumBuilder {
+        self.ignoredHeaders = names
+        return self
+    }
+
     @objc public func disableSlowRenderingDetection() -> MiddlewareRumBuilder {
         configFlags.disableSlowRenderingDetection()
         return self
