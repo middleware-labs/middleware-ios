@@ -55,8 +55,48 @@ jobs:
       env:
         TAG: ${{ github.event.inputs.versionName }}
 
-    # Publishes the pod to CocoaPods trunk. Runs after the tag push because
-    # trunk clones the source at tag v<spec.version>. Requires the
+    # Publishes the pod to our own specs repo, where new versions live now that
+    # CocoaPods trunk is going read-only. Runs after the tag push because
+    # validation clones the source at tag v<spec.version>. Requires the
+    # COCOAPODS_SPECS_DEPLOY_KEY repository secret: the private half of a deploy
+    # key with write access on middleware-labs/cocoapods-specs. Skips a version
+    # that is already there, so re-running a partially-failed release is safe.
+    - name: Publish podspec to the Middleware specs repo
+      run: |
+        set -euo pipefail
+
+        POD_NAME=MiddlewareRum
+        VERSION="${TAG#v}"
+        SPECS_REPO=middleware-specs
+
+        if [ -z "${COCOAPODS_SPECS_DEPLOY_KEY:-}" ]; then
+          echo "::error::The COCOAPODS_SPECS_DEPLOY_KEY secret is not set."
+          exit 1
+        fi
+
+        KEY_FILE="$(mktemp)"
+        trap 'rm -f "$KEY_FILE"' EXIT
+        printf '%s\n' "$COCOAPODS_SPECS_DEPLOY_KEY" > "$KEY_FILE"
+        chmod 600 "$KEY_FILE"
+        export GIT_SSH_COMMAND="ssh -i $KEY_FILE -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+
+        pod repo add "$SPECS_REPO" git@github.com:middleware-labs/cocoapods-specs.git
+
+        if [ -d "${CP_REPOS_DIR:-$HOME/.cocoapods/repos}/$SPECS_REPO/$POD_NAME/$VERSION" ]; then
+          echo "${POD_NAME} ${VERSION} is already in the specs repo; skipping push."
+          exit 0
+        fi
+
+        pod repo push "$SPECS_REPO" "${POD_NAME}.podspec" --allow-warnings \
+          --sources=https://github.com/middleware-labs/cocoapods-specs.git,https://cdn.cocoapods.org/
+      env:
+        COCOAPODS_SPECS_DEPLOY_KEY: ${{ secrets.COCOAPODS_SPECS_DEPLOY_KEY }}
+        TAG: ${{ github.event.inputs.versionName }}
+
+    # Also publishes to CocoaPods trunk, for apps that have not added the specs
+    # repo as a source. Trunk stops accepting pods permanently on 2026-12-02, so
+    # delete this step then. It never fails the release: the specs repo above is
+    # what the release depends on. Requires the
     # COCOAPODS_TRUNK_TOKEN repository secret (from `pod trunk register`,
     # the account must be an owner of the MiddlewareRum pod).
     # `pod trunk push --synchronous` waits for trunk to commit the spec to the
@@ -99,8 +139,7 @@ jobs:
           fi
         done
 
-        echo "::error::${POD_NAME} ${VERSION} was not accepted by CocoaPods trunk."
-        exit 1
+        echo "::warning::${POD_NAME} ${VERSION} was not accepted by CocoaPods trunk. It is still available from the specs repo."
       env:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
         TAG: ${{ github.event.inputs.versionName }}
