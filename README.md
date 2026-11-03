@@ -80,9 +80,16 @@ include simulator overhead, so only the deltas between variants are meaningful.
 
 ## Using Cocoapods
 
+CocoaPods trunk stops accepting new pods on December 2, 2026, so new versions are published to the Middleware specs repo. Add both sources at the top of your `Podfile`:
+
 ```ruby
+source 'https://github.com/middleware-labs/cocoapods-specs.git'
+source 'https://cdn.cocoapods.org/'
+
 pod "MiddlewareRum", "~> 2.3.1"
 ```
+
+Then run `pod install --repo-update`.
 
 ## Initialization of Middleware iOS sdk
             
