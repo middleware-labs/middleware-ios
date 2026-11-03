@@ -16,14 +16,6 @@ jobs:
       run: python3 scripts/changelog.py check "$TAG"
       env:
         TAG: ${{ github.event.inputs.versionName }}
-    - uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 15.1
-    - name: Install Homebrew kegs
-      run: make setup-brew
-    - name: Build for iOS
-      run: make build-for-testing-ios
-  
     - name: Verify podspec version matches tag
       run: |
         PODSPEC_VERSION=$(sed -n 's/^[[:space:]]*spec\.version[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' MiddlewareRum.podspec | head -1)
@@ -34,6 +26,26 @@ jobs:
         fi
       env:
         TAG: ${{ github.event.inputs.versionName }}
+    # Runs before the slow steps, so a release that can't succeed fails in seconds.
+    - name: Verify an existing tag points at this commit
+      run: |
+        REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG^{}" | cut -f1)
+        [ -n "$REMOTE_SHA" ] || REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | cut -f1)
+        if [ -n "$REMOTE_SHA" ] && [ "$REMOTE_SHA" != "$(git rev-parse HEAD)" ]; then
+          echo "::error::Tag $TAG already exists at $REMOTE_SHA, not at this commit ($(git rev-parse HEAD))."
+          echo "To finish that release, use Re-run failed jobs on its original run. To release this commit, bump the version first."
+          exit 1
+        fi
+      env:
+        TAG: ${{ github.event.inputs.versionName }}
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: 15.1
+    - name: Install Homebrew kegs
+      run: make setup-brew
+    - name: Build for iOS
+      run: make build-for-testing-ios
+
 
     - name: Create and push tag
       run: |
@@ -99,9 +111,10 @@ jobs:
     # what the release depends on. Requires the
     # COCOAPODS_TRUNK_TOKEN repository secret (from `pod trunk register`,
     # the account must be an owner of the MiddlewareRum pod).
-    # `pod trunk push --synchronous` waits for trunk to commit the spec to the
-    # CocoaPods/Specs repo and refresh the CDN version index. That second write
-    # is eventually consistent and occasionally errors out ("An internal server
+    # No --synchronous: it clones the whole CocoaPods/Specs repo, about 11 minutes,
+    # only to validate against pods pushed moments ago, and our dependencies are
+    # long established. After accepting a spec, `pod trunk push` refreshes the CDN
+    # version index. That write is eventually consistent and occasionally errors out ("An internal server
     # error occurred") even though the version is accepted. Once trunk has the
     # version, re-pushing is impossible ("Unable to accept duplicate entry"), so
     # a hard failure here would permanently block the release steps below.
@@ -124,8 +137,16 @@ jobs:
           exit 0
         fi
 
-        if pod trunk push "${POD_NAME}.podspec" --allow-warnings --synchronous; then
+        PUSH_LOG="$(mktemp)"
+        pod trunk push "${POD_NAME}.podspec" --allow-warnings 2>&1 | tee "$PUSH_LOG"
+        if [ "${PIPESTATUS[0]}" -eq 0 ]; then
           echo "Pushed ${POD_NAME} ${VERSION} to CocoaPods trunk."
+          exit 0
+        fi
+
+        # A refusal is final, so don't wait for the version to appear.
+        if grep -qi "read-only" "$PUSH_LOG"; then
+          echo "::warning::CocoaPods trunk is read-only, so ${POD_NAME} ${VERSION} was not pushed to it. It is still available from the specs repo."
           exit 0
         fi
 

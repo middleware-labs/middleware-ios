@@ -68,9 +68,11 @@ upload-dsym-sample:
 .PHONY: build-run-upload-dsym
 build-run-upload-dsym: run-sample-ios upload-dsym-sample
 
+# GitHub's macOS runners already have xcbeautify; `brew update` there spends
+# minutes upgrading unrelated packages.
 .PHONY: setup-brew
 setup-brew:
-	brew update && brew install xcbeautify
+	command -v xcbeautify >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install xcbeautify
 
 .PHONY: build-ios
 build-ios:
