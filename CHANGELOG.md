@@ -16,6 +16,8 @@ Maintaining this file:
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-11-03
+
 ### Changed
 
 - `slowRenders` spans now carry `frame.max_duration_ms`, the longest frame in that
