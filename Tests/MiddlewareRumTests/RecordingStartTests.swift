@@ -121,6 +121,33 @@ final class RecordingStartTests: XCTestCase {
         resetNativeSessionControlInternal()
     }
 
+    /// A React Native JS reload builds again in the same process. That used to stack
+    /// a second tracer provider, exporter and slow-rendering detector on the first,
+    /// doubling every `slowRenders` span.
+    func testRepeatBuildKeepsTheExistingInstanceAndRefreshesAttributes() {
+        // Other suites replace the global provider, so check a repeat build leaves
+        // whichever one is active alone rather than comparing against the first build.
+        let provider = OpenTelemetry.instance.tracerProvider as AnyObject
+        let exporter = rawSpanExporter as AnyObject?
+
+        let rebuilt = MiddlewareRumBuilder()
+            .target("http://127.0.0.1:2")
+            .rumAccessToken("other-token")
+            .serviceName("repeat-build")
+            .projectName("repeat-build")
+            .globalAttributes(["repeat.build.attr": "refreshed"])
+            .deploymentEnvironment("repeat-env")
+            .build()
+
+        XCTAssertTrue(rebuilt, "a repeat build must still report success so hosts carry on")
+        XCTAssertTrue(OpenTelemetry.instance.tracerProvider as AnyObject === provider)
+        XCTAssertTrue(rawSpanExporter as AnyObject? === exporter)
+
+        let attributes = MiddlewareRum.internalGetGlobalAttributes()
+        XCTAssertEqual(attributes["repeat.build.attr"] as? String, "refreshed")
+        XCTAssertEqual(attributes[ResourceAttributes.deploymentEnvironment.rawValue] as? String, "repeat-env")
+    }
+
     /// And `startRecording()` clears the manual stop.
     func testStartRecordingClearsManualStop() {
         MiddlewareRum.stopRecording()

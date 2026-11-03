@@ -191,7 +191,7 @@ Methods that can be used for setting instrumentation & configure your applicatio
                 <code lang="swift">.slowFrameDetectionThresholdMs(Double)</code>
             </td>
             <td>
-                Sets the default polling for slow render detection. Default value in milliseconds is 16.7
+                Sets the minimum duration for a slow frame, in milliseconds. A frame must also miss a vsync (1.5x the display's frame time) to count, so values below that have no effect. Default value is 16.7
             </td>
         </tr>
         <tr>
@@ -199,7 +199,7 @@ Methods that can be used for setting instrumentation & configure your applicatio
                 <code lang="swift">.frozenFrameDetectionThresholdMs(Double)</code>
             </td>
             <td>
-                Sets the default polling for slow render detection. Default value in milliseconds is 700
+                Sets the minimum duration for a frozen frame, in milliseconds. Default value is 700
             </td>
         </tr>
         <tr>

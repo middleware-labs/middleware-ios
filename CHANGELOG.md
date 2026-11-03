@@ -16,6 +16,27 @@ Maintaining this file:
 
 ## [Unreleased]
 
+### Changed
+
+- `slowRenders` spans now carry `frame.max_duration_ms`, the longest frame in that
+  report.
+
+### Fixed
+
+- A frame now has to miss a vsync to count as slow, measured against the display's
+  actual frame time. The old fixed 16.7ms was about one normal frame at 60Hz, and in
+  Low Power Mode every frame counted. Slow-render totals may drop after upgrading.
+  `slowFrameDetectionThresholdMs` remains a minimum.
+- Calling `build()` more than once in a process no longer starts everything again.
+  A React Native JS reload or Flutter hot restart used to add a second slow-rendering
+  detector, doubling every `slowRenders` and `frozenRenders` span, and re-registered
+  crash reporting and other instrumentation. A repeat `build()` now only updates
+  global attributes and the deployment environment, and logs a warning.
+- `slowRenders` and `frozenRenders` now report the screen that was showing when the
+  frame was slow. `activity.name` used to be fixed at startup, usually `unknown`.
+- Slow-frame spans are now reported when `build()` is called off the main thread, and
+  while the user is scrolling.
+
 ## [2.3.0] - 2026-10-13
 
 ### Added
