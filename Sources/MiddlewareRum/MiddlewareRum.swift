@@ -12,6 +12,9 @@ var middlewareRumInitTime = Date()
 var globalAttributes: [String: Any] = [:]
 let globalAttributesLock = NSLock()
 
+private let createLock = NSLock()
+private var isCreated = false
+
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
 /// Whether recording follows the sampler (`auto`) or has been explicitly
 /// turned on/off by the host through `startRecording()` / `stopRecording()`.
@@ -45,6 +48,20 @@ public enum CheckState {
 @objc public class MiddlewareRum: NSObject {
         
     @objc internal class func create(builder: MiddlewareRumBuilder) -> Bool {
+        // The native process can outlive a JS context (React Native reload, Flutter
+        // hot restart), so a host may build again. Everything below registers global
+        // state — detectors, observers, swizzles, the crash reporter — that would
+        // run twice, so a repeat build only refreshes the attributes the host owns.
+        createLock.lock()
+        let alreadyCreated = isCreated
+        isCreated = true
+        createLock.unlock()
+        if alreadyCreated {
+            Log.warning("MiddlewareRum has already been initialized; keeping the existing instance.")
+            applyGlobalAttributes(builder: builder)
+            return true
+        }
+
         middlewareRumInitTime = Date()
 
         let otlpConfig = OtlpConfiguration(
@@ -96,11 +113,8 @@ public enum CheckState {
             initSpan.setAttribute(key: MiddlewareConstants.Attributes.EVENT_TYPE, value: "app_activity")
             mwInit = initSpan
         }
-        setGlobalAttributes(builder.globalAttributes!)
-        if(builder.deploymentEnvironment != nil) {
-            setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
-        }
-        
+        applyGlobalAttributes(builder: builder)
+
         if(builder.isNetworkMonitoringEnabled()) {
             _ = initializeNetworkMonitoring(
                 tracePropagationTargets: builder.tracePropagationTargets,
@@ -170,6 +184,13 @@ public enum CheckState {
         mwInit?.end()
 
         return true
+    }
+
+    private class func applyGlobalAttributes(builder: MiddlewareRumBuilder) {
+        setGlobalAttributes(builder.globalAttributes!)
+        if(builder.deploymentEnvironment != nil) {
+            setGlobalAttributes([ResourceAttributes.deploymentEnvironment.rawValue: builder.deploymentEnvironment!])
+        }
     }
 
 #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS)
