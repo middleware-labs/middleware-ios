@@ -121,6 +121,9 @@ jobs:
     # Treat "version is registered on trunk" as success.
     - name: Push podspec to CocoaPods trunk
       run: |
+        # GitHub runs this as `bash -e`, which would exit at the first failing
+        # push and skip every fallback below; turn it off explicitly.
+        set +e
         set -uo pipefail
         pod --version
 
@@ -139,7 +142,8 @@ jobs:
 
         PUSH_LOG="$(mktemp)"
         pod trunk push "${POD_NAME}.podspec" --allow-warnings 2>&1 | tee "$PUSH_LOG"
-        if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+        PUSH_STATUS=${PIPESTATUS[0]}
+        if [ "$PUSH_STATUS" -eq 0 ]; then
           echo "Pushed ${POD_NAME} ${VERSION} to CocoaPods trunk."
           exit 0
         fi
