@@ -4,13 +4,18 @@
 import UIKit
 
 /// A window frame rendered at the screen's native scale, before it is
-/// scaled down for the wire.
+/// masked and scaled down for the wire.
+///
+/// `image` is unmasked: it never leaves the process, and `encodeDataUri`
+/// always paints `maskRects` over it.
 struct CapturedFrame {
     let image: CGImage
     /// Window size in points.
     let pointSize: CGSize
     /// Pixels per point of `image`.
     let scale: CGFloat
+    /// Rects to black out, in window points.
+    let maskRects: [CGRect]
 }
 
 /// Captures window frames for v3 session recording and turns them into
@@ -36,34 +41,29 @@ class ScreenshotCapturerV3 {
         return max(1, min(screenScale, shortEdgePx / shortEdge))
     }
 
-    /// Main thread only. Renders the window and paints the mask rects
-    /// (window points) as black rounded rects in the same context.
+    /// Main thread only. Renders the window; `maskRects` (window points) are
+    /// painted later, off the main thread, by `encodeDataUri`.
     /// Returns nil when the window has no size or rendering fails.
     ///
     /// Draws into a plain bitmap context at the screen's native scale, which
     /// keeps the main thread as short as possible: `UIGraphicsImageRenderer`
     /// costs several times more per frame on device, and so does making
-    /// `drawHierarchy` scale while it draws. Scaling down for the wire
-    /// happens off the main thread, in `encodeDataUri`.
-    func captureMaskedImage(window: UIWindow, maskRects: [CGRect]) -> CapturedFrame? {
+    /// `drawHierarchy` scale while it draws.
+    func capture(window: UIWindow, maskRects: [CGRect]) -> CapturedFrame? {
         let bounds = window.bounds
         guard bounds.width > 0, bounds.height > 0 else { return nil }
 
         let scale = max(window.screen.scale, 1)
-        return Self.render(pointSize: bounds.size, scale: scale) {
+        return Self.render(pointSize: bounds.size, scale: scale, maskRects: maskRects) {
             // afterScreenUpdates: true causes visible flicker when secure
             // text fields are on screen; false accepts a rare stale frame.
             window.drawHierarchy(in: bounds, afterScreenUpdates: false)
-            UIColor.black.setFill()
-            for rect in maskRects {
-                UIBezierPath(roundedRect: rect, cornerRadius: Self.maskCornerRadius).fill()
-            }
         }
     }
 
     /// Runs `draw` with a UIKit (top-left origin, points) current context
     /// backed by a bitmap of `pointSize` × `scale` pixels.
-    static func render(pointSize: CGSize, scale: CGFloat, _ draw: () -> Void) -> CapturedFrame? {
+    static func render(pointSize: CGSize, scale: CGFloat, maskRects: [CGRect] = [], _ draw: () -> Void) -> CapturedFrame? {
         guard let context = makeContext(
             width: Int((pointSize.width * scale).rounded()),
             height: Int((pointSize.height * scale).rounded())) else {
@@ -78,34 +78,38 @@ class ScreenshotCapturerV3 {
             UIGraphicsPopContext()
 
             guard let image = context.makeImage() else { return nil }
-            return CapturedFrame(image: image, pointSize: pointSize, scale: scale)
+            return CapturedFrame(image: image, pointSize: pointSize, scale: scale, maskRects: maskRects)
         }
     }
 
     /// CPU-bound; call off the main thread inside an autoreleasepool.
     /// iOS has no system WebP encoder — JPEG is part of the wire contract.
     func encodeDataUri(_ frame: CapturedFrame) -> String? {
-        guard let image = Self.scaledForOutput(frame),
+        guard let image = Self.outputImage(frame),
               let jpeg = UIImage(cgImage: image).jpegData(compressionQuality: jpegQuality) else {
             return nil
         }
         return "data:image/jpeg;base64," + jpeg.base64EncodedString()
     }
 
-    /// Scales a native-scale frame down to `renderScale`; returns it as is
-    /// when it is already that size.
-    static func scaledForOutput(_ frame: CapturedFrame) -> CGImage? {
+    /// Thread-safe. Scales a native-scale frame down to `renderScale` and
+    /// paints its mask rects as black rounded rects. Returns the image as is
+    /// when it is already that size and has nothing to mask.
+    static func outputImage(_ frame: CapturedFrame) -> CGImage? {
         let outputScale = renderScale(for: frame.pointSize, screenScale: frame.scale)
-        guard outputScale < frame.scale else { return frame.image }
-
-        guard let context = makeContext(
-            width: Int((frame.pointSize.width * outputScale).rounded()),
-            height: Int((frame.pointSize.height * outputScale).rounded())) else {
-            return nil
+        if outputScale >= frame.scale && frame.maskRects.isEmpty {
+            return frame.image
         }
-        context.interpolationQuality = .medium
-        context.draw(frame.image, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-        return context.makeImage()
+
+        let source = UIImage(cgImage: frame.image, scale: frame.scale, orientation: .up)
+        return render(pointSize: frame.pointSize, scale: min(outputScale, frame.scale)) {
+            UIGraphicsGetCurrentContext()?.interpolationQuality = .medium
+            source.draw(in: CGRect(origin: .zero, size: frame.pointSize))
+            UIColor.black.setFill()
+            for rect in frame.maskRects {
+                UIBezierPath(roundedRect: rect, cornerRadius: maskCornerRadius).fill()
+            }
+        }?.image
     }
 
     /// Opaque 32-bit BGRX context, the layout iOS uses for opaque images

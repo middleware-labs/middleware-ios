@@ -4,7 +4,7 @@
 import UIKit
 
 /// v3 session recorder: captures throttled, masked screenshots of the key
-/// window on every layout pass and emits them as rrweb events (Meta +
+/// window after layout passes and emits them as rrweb events (Meta +
 /// FullSnapshot per epoch, img-src mutations per frame, MouseInteraction per
 /// touch) through `RRWebExporterV3` to the metrics endpoint.
 ///
@@ -24,6 +24,11 @@ class ReplayRecorderV3 {
 
     private(set) var isRunning = false
     private var captureInFlight = false
+
+    // Capture pacing — main thread only.
+    private var baseInterval: TimeInterval = 1.0
+    private var adaptiveInterval: TimeInterval = 0
+    private var deferralStart: Date?
 
     // Epoch state — mutated on the main thread (captureFrame) and the process
     // queue (processFrame); each field is only written by one side at a time
@@ -52,7 +57,10 @@ class ReplayRecorderV3 {
         maskCollector = MaskRectCollector(
             maskAllTextInputs: options.maskAllTextInputs,
             maskAllImages: options.maskAllImages)
-        ViewLayoutObserver.shared.throttleInterval = options.frequency.intervalSeconds
+        baseInterval = options.frequency.intervalSeconds
+        adaptiveInterval = 0
+        deferralStart = nil
+        ViewLayoutObserver.shared.throttleInterval = baseInterval
 
         exporter = RRWebExporterV3(
             target: target,
@@ -62,7 +70,7 @@ class ReplayRecorderV3 {
             })
 
         ViewLayoutObserver.shared.onLayout = { [weak self] in
-            self?.captureFrame()
+            self?.captureFrame() ?? true
         }
         ViewLayoutObserver.shared.enable()
 
@@ -91,11 +99,11 @@ class ReplayRecorderV3 {
             forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
         ) { [weak self] _ in
             self?.resetEpoch()
-            self?.captureFrame()
+            ViewLayoutObserver.shared.setNeedsCapture()
         })
 
-        DispatchQueue.main.async { [weak self] in
-            self?.captureFrame()
+        DispatchQueue.main.async {
+            ViewLayoutObserver.shared.setNeedsCapture()
         }
         Log.debug("Replay v3 recording started")
     }
@@ -131,16 +139,20 @@ class ReplayRecorderV3 {
 
     // MARK: - Frame capture (main thread)
 
-    private func captureFrame() {
-        guard isRunning, Thread.isMainThread else { return }
-        guard !captureInFlight else { return }
+    /// Returns false to have the capture retried shortly (see
+    /// `ViewLayoutObserver.onLayout`), true once there is nothing left to do.
+    private func captureFrame() -> Bool {
+        guard isRunning, Thread.isMainThread else { return true }
+        guard !captureInFlight else { return false }
         guard let window = ViewLayoutObserver.keyWindow(),
-              window.bounds.width > 0, window.bounds.height > 0 else { return }
-        if isAnimatingTransition(window) {
-            return // avoid black/torn frames mid-transition
+              window.bounds.width > 0, window.bounds.height > 0 else { return true }
+        if let reason = CaptureActivityGuard.reasonToWait(window: window), !deferralExpired() {
+            Log.debug("Replay v3 capture deferred: \(reason)")
+            return false
         }
+        deferralStart = nil
         let sessionId = getRumSessionId()
-        guard !sessionId.isEmpty else { return }
+        guard !sessionId.isEmpty else { return true }
         if sessionId != lastSessionId {
             resetEpoch()
             lastSessionId = sessionId
@@ -157,11 +169,13 @@ class ReplayRecorderV3 {
         sanitizedLock.unlock()
 
         captureInFlight = true
+        let captureStart = CACurrentMediaTime()
         let maskRects = maskCollector.collect(in: window, sanitized: sanitized)
-        guard let frame = capturer.captureMaskedImage(window: window, maskRects: maskRects) else {
+        guard let frame = capturer.capture(window: window, maskRects: maskRects) else {
             captureInFlight = false
-            return
+            return true
         }
+        updateAdaptiveInterval(mainThreadDuration: CACurrentMediaTime() - captureStart)
 
         processQueue.async { [weak self] in
             guard let self = self else { return }
@@ -177,6 +191,48 @@ class ReplayRecorderV3 {
             }
             self.captureInFlight = false
         }
+        return true
+    }
+
+    // MARK: - Capture pacing (main thread)
+
+    /// Longest a capture is put off for interaction or animation before it is
+    /// taken anyway, so a long scroll or a looping animation still records.
+    static let maximumDeferral: TimeInterval = 1
+    /// Main-thread capture time from which the capture interval backs off.
+    static let slowCaptureThreshold: TimeInterval = 0.15
+    /// Longest interval the backoff grows to.
+    static let maximumAdaptiveInterval: TimeInterval = 2
+
+    private func deferralExpired() -> Bool {
+        let now = Date()
+        guard let start = deferralStart else {
+            deferralStart = now
+            return false
+        }
+        return now.timeIntervalSince(start) >= Self.maximumDeferral
+    }
+
+    /// Doubles the capture interval after a capture held the main thread for
+    /// `slowCaptureThreshold` or more, and halves it back after faster ones,
+    /// so slow devices record fewer frames instead of stuttering.
+    private func updateAdaptiveInterval(mainThreadDuration: TimeInterval) {
+        adaptiveInterval = Self.nextAdaptiveInterval(
+            current: adaptiveInterval,
+            base: baseInterval,
+            mainThreadDuration: mainThreadDuration)
+        ViewLayoutObserver.shared.throttleInterval = max(baseInterval, adaptiveInterval)
+    }
+
+    /// Backoff step, adapted from the Sentry Cocoa SDK's replay capture
+    /// pacing. 0 means no backoff.
+    static func nextAdaptiveInterval(current: TimeInterval, base: TimeInterval, mainThreadDuration: TimeInterval) -> TimeInterval {
+        guard mainThreadDuration >= slowCaptureThreshold else {
+            let halved = current / 2
+            return halved <= base ? 0 : halved
+        }
+        let doubled = current > 0 ? current * 2 : base * 2
+        return min(doubled, max(maximumAdaptiveInterval, base))
     }
 
     /// Runs on the process queue.
@@ -241,27 +297,6 @@ class ReplayRecorderV3 {
         lastMetaHeight = -1
         lastFrameHash = 0
         lastScreenName = nil
-    }
-
-    /// Skip captures while any view controller in the hierarchy is animating a
-    /// transition — drawHierarchy renders black/torn frames mid-animation.
-    private func isAnimatingTransition(_ window: UIWindow) -> Bool {
-        var controller = window.rootViewController
-        while let current = controller {
-            if current.transitionCoordinator?.isAnimated == true {
-                return true
-            }
-            if let presented = current.presentedViewController {
-                controller = presented
-            } else if let navigation = current as? UINavigationController {
-                controller = navigation.topViewController
-            } else if let tabs = current as? UITabBarController {
-                controller = tabs.selectedViewController
-            } else {
-                controller = nil
-            }
-        }
-        return false
     }
 
     /// Live resource attributes for a batch: the SDK resource (kept current on
