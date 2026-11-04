@@ -75,7 +75,7 @@ include simulator overhead, so only the deltas between variants are meaningful.
 ### Add the following line in `Package.swift` in `dependencies`
             
 ```swift
-.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.3.1"),
+.package(url: "https://github.com/middleware-labs/middleware-ios", from: "2.3.2"),
 ```
 
 ## Using Cocoapods
@@ -86,7 +86,7 @@ CocoaPods trunk stops accepting new pods on December 2, 2026, so new versions ar
 source 'https://github.com/middleware-labs/cocoapods-specs.git'
 source 'https://cdn.cocoapods.org/'
 
-pod "MiddlewareRum", "~> 2.3.1"
+pod "MiddlewareRum", "~> 2.3.2"
 ```
 
 Then run `pod install --repo-update`.

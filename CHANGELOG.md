@@ -16,6 +16,8 @@ Maintaining this file:
 
 ## [Unreleased]
 
+## [2.3.2] - 2026-11-04
+
 ### Security
 
 - With `maskAllTextInputs` on, session recording now masks all SwiftUI text on
