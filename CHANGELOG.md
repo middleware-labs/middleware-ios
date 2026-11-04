@@ -16,6 +16,12 @@ Maintaining this file:
 
 ## [Unreleased]
 
+### Security
+
+- With `maskAllTextInputs` on, session recording now masks all SwiftUI text on
+  iOS 26 (it missed text nested inside containers, such as list or grid cells)
+  and React Native text, which it did not mask at all before.
+
 ### Fixed
 
 - Session recording no longer stalls the UI on every captured frame. Each capture

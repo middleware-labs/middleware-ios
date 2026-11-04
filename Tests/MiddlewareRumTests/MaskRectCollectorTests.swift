@@ -132,6 +132,90 @@ final class MaskRectCollectorTests: XCTestCase {
     }
     #endif
 
+    // MARK: - SwiftUI drawing layers and React Native text
+
+    /// Stand-ins for SwiftUI's private drawing layers and RN's text view.
+    private final class FakeTextLayer: CALayer {}
+    private final class FakeImageLayer: CALayer {}
+    private final class FakeRNTextView: UIView {}
+    private final class TextLayerBackedView: UIView {
+        override class var layerClass: AnyClass { FakeTextLayer.self }
+    }
+
+    private func collector(maskAllText: Bool = true, maskAllImages: Bool = false) -> MaskRectCollector {
+        MaskRectCollector(
+            maskAllTextInputs: maskAllText,
+            maskAllImages: maskAllImages,
+            textLayerClasses: [FakeTextLayer.self],
+            imageLayerClasses: [FakeImageLayer.self],
+            textDrawingViewClasses: [FakeRNTextView.self])
+    }
+
+    /// A container with a subview and, like an iOS 26 SwiftUI card, a text
+    /// layer two sublayers deep with no backing view.
+    private func makeCardWindow() -> (UIWindow, FakeTextLayer) {
+        let container = UIView()
+        container.addSubview(UIView(frame: CGRect(x: 0, y: 0, width: 10, height: 10)))
+        let card = CALayer()
+        card.frame = CGRect(x: 20, y: 0, width: 150, height: 40)
+        let text = FakeTextLayer()
+        text.frame = CGRect(x: 10, y: 5, width: 60, height: 20)
+        card.addSublayer(text)
+        container.layer.addSublayer(card)
+        return (makeWindow(with: [container]), text)
+    }
+
+    func testNestedDrawingLayerMaskedOnViewWithSubviews() {
+        let (window, _) = makeCardWindow()
+
+        // container at (10, 10), card at +20, text at +10/+5
+        XCTAssertEqual(collector().collect(in: window, sanitized: []),
+                       [CGRect(x: 40, y: 15, width: 60, height: 20)])
+        XCTAssertEqual(collector(maskAllText: false).collect(in: window, sanitized: []), [])
+    }
+
+    func testHiddenDrawingLayerSkipped() {
+        let (window, text) = makeCardWindow()
+        text.isHidden = true
+
+        XCTAssertEqual(collector().collect(in: window, sanitized: []), [])
+    }
+
+    func testSubviewLayersAreNotCountedTwice() {
+        let view = TextLayerBackedView()
+        let window = makeWindow(with: [view])
+
+        XCTAssertEqual(collector().collect(in: window, sanitized: []).count, 1)
+    }
+
+    func testDrawingImageLayerMaskedOnlyWhenMaskAllImages() {
+        let container = UIView()
+        let image = FakeImageLayer()
+        image.frame = CGRect(x: 0, y: 0, width: 20, height: 20)
+        container.layer.addSublayer(image)
+        let window = makeWindow(with: [container])
+
+        XCTAssertEqual(collector(maskAllText: true, maskAllImages: false).collect(in: window, sanitized: []), [])
+        XCTAssertEqual(collector(maskAllText: false, maskAllImages: true).collect(in: window, sanitized: []).count, 1)
+    }
+
+    func testReactNativeTextViewMaskedWholeOnlyWhenMaskAllText() {
+        let text = FakeRNTextView()
+        let inline = UILabel(frame: CGRect(x: 0, y: 0, width: 20, height: 10))
+        inline.text = "inline"
+        text.addSubview(inline)
+        let window = makeWindow(with: [text])
+
+        XCTAssertEqual(collector().collect(in: window, sanitized: []),
+                       [CGRect(x: 10, y: 10, width: 200, height: 40)])
+        XCTAssertEqual(collector(maskAllText: false).collect(in: window, sanitized: []), [])
+    }
+
+    func testReactNativeTextClassesResolveByName() {
+        // The real classes only exist in RN apps; the table must just be nil-safe.
+        XCTAssertTrue(MaskRectCollector.reactNativeTextViewClasses.isEmpty)
+    }
+
     func testRenderScaleCapsShortEdge() {
         // iPhone-sized window at 3x native scale gets capped near 640/393
         let phoneScale = ScreenshotCapturerV3.renderScale(for: CGSize(width: 393, height: 852), screenScale: 3)
