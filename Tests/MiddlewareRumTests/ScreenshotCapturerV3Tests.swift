@@ -50,18 +50,45 @@ final class ScreenshotCapturerV3Tests: XCTestCase {
     func testCaptureRendersWindowAtScreenScale() throws {
         let window = UIWindow(frame: CGRect(origin: .zero, size: pointSize))
 
-        let frame = try XCTUnwrap(ScreenshotCapturerV3().captureMaskedImage(
+        let frame = try XCTUnwrap(ScreenshotCapturerV3().capture(
             window: window, maskRects: [CGRect(x: 200, y: 0, width: 100, height: 100)]))
 
         XCTAssertEqual(frame.pointSize, pointSize)
         XCTAssertEqual(frame.scale, max(window.screen.scale, 1))
         XCTAssertEqual(frame.image.width, Int(pointSize.width * frame.scale))
+        XCTAssertEqual(frame.maskRects, [CGRect(x: 200, y: 0, width: 100, height: 100)])
+    }
+
+    func testOutputPaintsMaskRectsInPoints() throws {
+        // mask over the red square's lower half only
+        let mask = CGRect(x: 0, y: 50, width: 100, height: 50)
+        let frame = try XCTUnwrap(ScreenshotCapturerV3.render(pointSize: pointSize, scale: 3, maskRects: [mask]) { drawScene() })
+
+        let output = try XCTUnwrap(ScreenshotCapturerV3.outputImage(frame))
+
+        let unmasked = pixel(output, at: CGPoint(x: 50, y: 20))
+        XCTAssertGreaterThan(unmasked.r, 200)
+        let masked = pixel(output, at: CGPoint(x: 50, y: 80))
+        XCTAssertLessThan(Int(masked.r) + Int(masked.g) + Int(masked.b), 30)
+        let outside = pixel(output, at: CGPoint(x: 300, y: 80))
+        XCTAssertGreaterThan(outside.g, 200)
+    }
+
+    func testFrameAtOutputScaleIsStillMasked() throws {
+        let frame = try XCTUnwrap(ScreenshotCapturerV3.render(
+            pointSize: pointSize, scale: 1, maskRects: [CGRect(x: 0, y: 0, width: 100, height: 100)]) { drawScene() })
+
+        let output = try XCTUnwrap(ScreenshotCapturerV3.outputImage(frame))
+
+        XCTAssertFalse(output === frame.image)
+        let masked = pixel(output, at: CGPoint(x: 50, y: 50))
+        XCTAssertLessThan(Int(masked.r) + Int(masked.g) + Int(masked.b), 30)
     }
 
     func testOutputIsScaledToShortEdgeCap() throws {
         let frame = try XCTUnwrap(ScreenshotCapturerV3.render(pointSize: pointSize, scale: 3) { drawScene() })
 
-        let output = try XCTUnwrap(ScreenshotCapturerV3.scaledForOutput(frame))
+        let output = try XCTUnwrap(ScreenshotCapturerV3.outputImage(frame))
 
         // 640 / 400 = 1.6x
         XCTAssertEqual(output.width, 640)
@@ -78,7 +105,7 @@ final class ScreenshotCapturerV3Tests: XCTestCase {
         let iPad = CGSize(width: 820, height: 1180)
         let frame = try XCTUnwrap(ScreenshotCapturerV3.render(pointSize: iPad, scale: 2) {})
 
-        let output = try XCTUnwrap(ScreenshotCapturerV3.scaledForOutput(frame))
+        let output = try XCTUnwrap(ScreenshotCapturerV3.outputImage(frame))
 
         XCTAssertEqual(output.width, 820)
         XCTAssertEqual(output.height, 1180)
@@ -87,7 +114,7 @@ final class ScreenshotCapturerV3Tests: XCTestCase {
     func testFrameAlreadyAtOutputScaleIsNotRedrawn() throws {
         let frame = try XCTUnwrap(ScreenshotCapturerV3.render(pointSize: pointSize, scale: 1) { drawScene() })
 
-        XCTAssertTrue(ScreenshotCapturerV3.scaledForOutput(frame) === frame.image)
+        XCTAssertTrue(ScreenshotCapturerV3.outputImage(frame) === frame.image)
     }
 
     func testEncodesJpegDataUriAtOutputSize() throws {

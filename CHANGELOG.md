@@ -30,6 +30,11 @@ Maintaining this file:
   setting up the image, which now happens in a plain bitmap context, with the
   scale-down done off the main thread. Replay frames keep the same size and
   quality.
+- Session recording now captures once the main thread has finished its work for
+  the frame, not in the middle of a layout pass. It waits while the user is
+  scrolling or dragging, or while several animations run, for up to a second.
+  If a capture still takes 150ms or more, it captures less often, down to one
+  frame every 2 seconds.
 
 ## [2.3.1] - 2026-11-03
 
