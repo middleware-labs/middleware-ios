@@ -216,6 +216,41 @@ final class MaskRectCollectorTests: XCTestCase {
         XCTAssertTrue(MaskRectCollector.reactNativeTextViewClasses.isEmpty)
     }
 
+    // MARK: - Private names and named images
+
+    func testEncodedPrivateNamesDecodeAndResolve() {
+        XCTAssertEqual(decodedPrivateName("X1VJUmVtb3RlVmlldw=="), "_UIRemoteView")
+        XCTAssertEqual(decodedPrivateName("X1VJV2luZG93U3lzdGVtR2VzdHVyZVN0YXRlQ2hhbmdlZE5vdGlmaWNhdGlvbg=="),
+                       "_UIWindowSystemGestureStateChangedNotification")
+        XCTAssertEqual(decodedPrivateName("X1R0QzdTd2lmdFVJUDMzXzg2M0NDRjlENDlCNTM1REFFQjFDN0Q2MUJFRTUzQjU5MTRDR0RyYXdpbmdMYXllcg=="),
+                       "_TtC7SwiftUIP33_863CCF9D49B535DAEB1C7D61BEE53B5914CGDrawingLayer")
+        XCTAssertNil(decodedPrivateName("not base64!"))
+
+        XCTAssertNotNil(decodedPrivateName("X1VJUmVtb3RlVmlldw==").flatMap(NSClassFromString))
+        if #available(iOS 26.0, tvOS 26.0, *) {
+            XCTAssertFalse(MaskRectCollector.swiftUITextLayerClasses.isEmpty, "SwiftUI text layer class should resolve on iOS 26")
+        }
+    }
+
+    /// UIImage(named:) needs an asset catalog the test bundle lacks; stand in
+    /// with the description format iOS 26 prints for catalog images.
+    private final class CatalogImage: UIImage {
+        override var description: String {
+            "<UIImage:0x102e1c3c0 named(main: Logo) {20, 20} renderingMode=automatic(original)>"
+        }
+    }
+
+    func testCatalogImageNotMaskedButDerivedImageIs() {
+        let drawn = UIGraphicsImageRenderer(size: CGSize(width: 10, height: 10)).image { _ in }
+        let catalog = CatalogImage(cgImage: drawn.cgImage!)
+        XCTAssertTrue(MaskRectCollector.isNamedImage(catalog))
+        XCTAssertFalse(MaskRectCollector.isNamedImage(drawn))
+
+        let window = makeWindow(with: [UIImageView(image: catalog), UIImageView(image: drawn)])
+        let rects = MaskRectCollector(maskAllTextInputs: false, maskAllImages: true).collect(in: window, sanitized: [])
+        XCTAssertEqual(rects.count, 1, "only the drawn image should be masked")
+    }
+
     func testRenderScaleCapsShortEdge() {
         // iPhone-sized window at 3x native scale gets capped near 640/393
         let phoneScale = ScreenshotCapturerV3.renderScale(for: CGSize(width: 393, height: 852), screenScale: 3)

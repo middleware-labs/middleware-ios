@@ -17,7 +17,8 @@ import WebKit
 ///    sensitive-content fields are masked even when `maskAllTextInputs` is off;
 ///  - UILabel/UIButton with text masked when `maskAllTextInputs`;
 ///  - UIImageView masked when `maskAllImages`, unless the image comes from the
-///    asset catalog or is an SF Symbol (app chrome, not user content);
+///    asset catalog or is an SF Symbol (app chrome, not user content); images
+///    derived from those (tinted, re-rendered) are masked;
 ///  - WKWebView masked whole when `maskAllTextInputs` or `maskAllImages` is on
 ///    (content is opaque to us); both are off by default, so web content is
 ///    recorded unless the app opts in or tags the view `mw-no-capture`;
@@ -59,7 +60,8 @@ class MaskRectCollector {
 
     // SwiftUI renders text/images into private UIKit views/layers; these
     // class-name tables are nil-safe (missing classes on a given OS version
-    // simply mean no extra masking from that rule).
+    // simply mean no extra masking from that rule). Underscored private names
+    // stay base64-encoded, see `decodedPrivateName`.
     static let swiftUITextViewClasses: [AnyClass] = [
         "SwiftUI.CGDrawingView",
         "SwiftUI.TextEditorTextView",
@@ -71,9 +73,10 @@ class MaskRectCollector {
     ].compactMap { NSClassFromString($0) }
 
     static let swiftUITextLayerClasses: [AnyClass] = [
-        // iOS 26 draws SwiftUI Text/Button into this layer without a backing view
-        "_TtC7SwiftUIP33_863CCF9D49B535DAEB1C7D61BEE53B5914CGDrawingLayer",
-    ].compactMap { NSClassFromString($0) }
+        // iOS 26 draws SwiftUI Text/Button into this layer without a backing view:
+        // _TtC7SwiftUIP33_863CCF9D49B535DAEB1C7D61BEE53B5914CGDrawingLayer
+        decodedPrivateName("X1R0QzdTd2lmdFVJUDMzXzg2M0NDRjlENDlCNTM1REFFQjFDN0Q2MUJFRTUzQjU5MTRDR0RyYXdpbmdMYXllcg=="),
+    ].compactMap { $0.flatMap(NSClassFromString) }
 
     /// React Native draws text in its own views rather than UILabel: Paper's
     /// RCTTextView and Fabric's RCTParagraphComponentView.
@@ -82,7 +85,8 @@ class MaskRectCollector {
         "RCTParagraphComponentView",
     ].compactMap { NSClassFromString($0) }
 
-    private static let remoteViewClass: AnyClass? = NSClassFromString("_UIRemoteView")
+    // _UIRemoteView
+    private static let remoteViewClass: AnyClass? = decodedPrivateName("X1VJUmVtb3RlVmlldw==").flatMap(NSClassFromString)
 
     private let textLayerClasses: [AnyClass]
     private let imageLayerClasses: [AnyClass]
@@ -296,13 +300,22 @@ class MaskRectCollector {
     private func shouldMask(_ imageView: UIImageView) -> Bool {
         guard maskAllImages, let image = imageView.image else { return false }
         // Asset-catalog images and SF Symbols are app chrome, not user content.
-        if let asset = image.imageAsset, asset.value(forKey: "_containingBundle") != nil {
-            return false
-        }
         if image.isSymbolImage {
             return false
         }
-        return true
+        return !Self.isNamedImage(image)
+    }
+
+    /// Whether `image` was loaded by name from a bundle (an asset catalog).
+    ///
+    /// Reads the `named(<bundle>: <name>)` marker of the image's description,
+    /// as the Sentry Cocoa SDK does, rather than a private key of
+    /// `imageAsset`: reading a missing private key throws and would crash the
+    /// app, and the `imageAsset` getter can lazily create an asset and change
+    /// the layout size of archived images. The format is undocumented; if it
+    /// changes, these images are masked, the safe side.
+    static func isNamedImage(_ image: UIImage) -> Bool {
+        return image.description.contains("named(")
     }
 }
 #endif
