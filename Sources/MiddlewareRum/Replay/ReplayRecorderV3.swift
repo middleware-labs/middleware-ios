@@ -158,7 +158,7 @@ class ReplayRecorderV3 {
 
         captureInFlight = true
         let maskRects = maskCollector.collect(in: window, sanitized: sanitized)
-        guard let image = capturer.captureMaskedImage(window: window, maskRects: maskRects) else {
+        guard let frame = capturer.captureMaskedImage(window: window, maskRects: maskRects) else {
             captureInFlight = false
             return
         }
@@ -167,7 +167,7 @@ class ReplayRecorderV3 {
             guard let self = self else { return }
             autoreleasepool {
                 self.processFrame(
-                    image: image,
+                    frame: frame,
                     needsMeta: needsMeta,
                     width: width,
                     height: height,
@@ -181,7 +181,7 @@ class ReplayRecorderV3 {
 
     /// Runs on the process queue.
     private func processFrame(
-        image: UIImage,
+        frame: CapturedFrame,
         needsMeta: Bool,
         width: Int,
         height: Int,
@@ -190,7 +190,7 @@ class ReplayRecorderV3 {
         sessionId: String
     ) {
         guard isRunning, let exporter = exporter else { return }
-        guard let dataUri = capturer.encodeDataUri(image) else { return }
+        guard let dataUri = capturer.encodeDataUri(frame) else { return }
 
         let frameHash = dataUri.hashValue
         if !needsMeta && frameHash == lastFrameHash {

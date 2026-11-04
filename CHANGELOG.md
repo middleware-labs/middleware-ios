@@ -16,6 +16,15 @@ Maintaining this file:
 
 ## [Unreleased]
 
+### Fixed
+
+- Session recording no longer stalls the UI on every captured frame. Each capture
+  held the main thread for roughly 100ms on some iPads, about once a second, and
+  each stall was reported as a `slowRenders` span. Most of that time was spent
+  setting up the image, which now happens in a plain bitmap context, with the
+  scale-down done off the main thread. Replay frames keep the same size and
+  quality.
+
 ## [2.3.1] - 2026-11-03
 
 ### Changed
