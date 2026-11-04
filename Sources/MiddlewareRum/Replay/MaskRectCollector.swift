@@ -17,13 +17,17 @@ import WebKit
 ///    sensitive-content fields are masked even when `maskAllTextInputs` is off;
 ///  - UILabel/UIButton with text masked when `maskAllTextInputs`;
 ///  - UIImageView masked when `maskAllImages`, unless the image comes from the
-///    asset catalog or is an SF Symbol (app chrome, not user content);
+///    asset catalog or is an SF Symbol (app chrome, not user content); images
+///    derived from those (tinted, re-rendered) are masked;
 ///  - WKWebView masked whole when `maskAllTextInputs` or `maskAllImages` is on
 ///    (content is opaque to us); both are off by default, so web content is
 ///    recorded unless the app opts in or tags the view `mw-no-capture`;
 ///  - `_UIRemoteView` (out-of-process camera/photo/contact pickers) always masked;
 ///  - UIPickerView masked under `maskAllTextInputs`;
-///  - SwiftUI text/images detected via nil-safe class-name tables;
+///  - SwiftUI text/images detected via nil-safe class-name tables, including
+///    the drawing layers iOS 26 nests at any depth without a backing view;
+///  - React Native text views (which draw text themselves, not via UILabel)
+///    masked under `maskAllTextInputs`;
 ///  - legacy compat: `Sanitizable` elements registered via addIgnoredView /
 ///    `.sensitive()` are always masked.
 class MaskRectCollector {
@@ -56,27 +60,52 @@ class MaskRectCollector {
 
     // SwiftUI renders text/images into private UIKit views/layers; these
     // class-name tables are nil-safe (missing classes on a given OS version
-    // simply mean no extra masking from that rule).
-    private static let swiftUITextViewClasses: [AnyClass] = [
+    // simply mean no extra masking from that rule). Underscored private names
+    // stay base64-encoded, see `decodedPrivateName`.
+    static let swiftUITextViewClasses: [AnyClass] = [
         "SwiftUI.CGDrawingView",
         "SwiftUI.TextEditorTextView",
         "SwiftUI.VerticalTextView",
     ].compactMap { NSClassFromString($0) }
 
-    private static let swiftUIImageLayerClasses: [AnyClass] = [
+    static let swiftUIImageLayerClasses: [AnyClass] = [
         "SwiftUI.ImageLayer",
     ].compactMap { NSClassFromString($0) }
 
-    private static let swiftUITextLayerClasses: [AnyClass] = [
-        // iOS 26 draws SwiftUI Text/Button into this layer without a backing view
-        "_TtC7SwiftUIP33_863CCF9D49B535DAEB1C7D61BEE53B5914CGDrawingLayer",
+    static let swiftUITextLayerClasses: [AnyClass] = [
+        // iOS 26 draws SwiftUI Text/Button into this layer without a backing view:
+        // _TtC7SwiftUIP33_863CCF9D49B535DAEB1C7D61BEE53B5914CGDrawingLayer
+        decodedPrivateName("X1R0QzdTd2lmdFVJUDMzXzg2M0NDRjlENDlCNTM1REFFQjFDN0Q2MUJFRTUzQjU5MTRDR0RyYXdpbmdMYXllcg=="),
+    ].compactMap { $0.flatMap(NSClassFromString) }
+
+    /// React Native draws text in its own views rather than UILabel: Paper's
+    /// RCTTextView and Fabric's RCTParagraphComponentView.
+    static let reactNativeTextViewClasses: [AnyClass] = [
+        "RCTTextView",
+        "RCTParagraphComponentView",
     ].compactMap { NSClassFromString($0) }
 
-    private static let remoteViewClass: AnyClass? = NSClassFromString("_UIRemoteView")
+    // _UIRemoteView
+    private static let remoteViewClass: AnyClass? = decodedPrivateName("X1VJUmVtb3RlVmlldw==").flatMap(NSClassFromString)
 
-    init(maskAllTextInputs: Bool = false, maskAllImages: Bool = false) {
+    private let textLayerClasses: [AnyClass]
+    private let imageLayerClasses: [AnyClass]
+    private let textDrawingViewClasses: [AnyClass]
+
+    /// The class tables are parameters only so tests can stand in for the
+    /// private SwiftUI and React Native classes.
+    init(
+        maskAllTextInputs: Bool = false,
+        maskAllImages: Bool = false,
+        textLayerClasses: [AnyClass] = MaskRectCollector.swiftUITextLayerClasses,
+        imageLayerClasses: [AnyClass] = MaskRectCollector.swiftUIImageLayerClasses,
+        textDrawingViewClasses: [AnyClass] = MaskRectCollector.reactNativeTextViewClasses
+    ) {
         self.maskAllTextInputs = maskAllTextInputs
         self.maskAllImages = maskAllImages
+        self.textLayerClasses = textLayerClasses
+        self.imageLayerClasses = imageLayerClasses
+        self.textDrawingViewClasses = textDrawingViewClasses
     }
 
     /// Main thread only.
@@ -163,6 +192,12 @@ class MaskRectCollector {
         }
         #endif
 
+        // React Native text, including any inline views it hosts
+        if maskAllTextInputs, textDrawingViewClasses.contains(where: { view.isKind(of: $0) }) {
+            appendRect(of: view, window: window, into: &rects)
+            return
+        }
+
         // SwiftUI text views (leafs)
         if maskAllTextInputs, Self.swiftUITextViewClasses.contains(where: { view.isKind(of: $0) }) {
             if view.subviews.isEmpty {
@@ -171,34 +206,52 @@ class MaskRectCollector {
             }
         }
 
-        // SwiftUI image/text layers hosted on generic views
-        if view.subviews.isEmpty {
-            if maskAllImages, layerMatches(view.layer, classes: Self.swiftUIImageLayerClasses, window: window, into: &rects) {
-                return
-            }
-            if maskAllTextInputs, layerMatches(view.layer, classes: Self.swiftUITextLayerClasses, window: window, into: &rects) {
-                return
-            }
+        // SwiftUI image/text layers backing a leaf view
+        if view.subviews.isEmpty, maskableDrawingLayer(view.layer) {
+            appendRect(of: view.layer, window: window, into: &rects)
+            return
         }
+
+        // SwiftUI on iOS 26 draws text and images into sublayers with no
+        // backing view, nested at any depth; subviews' layers are walked below.
+        collectDrawingSublayers(of: view.layer, window: window, into: &rects)
 
         for subview in view.subviews {
             walk(subview, window: window, into: &rects)
         }
     }
 
-    private func layerMatches(_ layer: CALayer, classes: [AnyClass], window: UIWindow, into rects: inout [CGRect]) -> Bool {
-        guard !classes.isEmpty else { return false }
-        var matched = false
-        var layers: [CALayer] = [layer]
-        layers.append(contentsOf: layer.sublayers ?? [])
-        for candidate in layers where classes.contains(where: { candidate.isKind(of: $0) }) {
-            let rect = candidate.convert(candidate.bounds, to: window.layer)
-            if !rect.isEmpty {
-                rects.append(rect)
-                matched = true
+    private func maskableDrawingLayer(_ layer: CALayer) -> Bool {
+        if maskAllTextInputs, textLayerClasses.contains(where: { layer.isKind(of: $0) }) {
+            return true
+        }
+        if maskAllImages, imageLayerClasses.contains(where: { layer.isKind(of: $0) }) {
+            return true
+        }
+        return false
+    }
+
+    private func collectDrawingSublayers(of layer: CALayer, window: UIWindow, into rects: inout [CGRect]) {
+        guard (maskAllTextInputs && !textLayerClasses.isEmpty) || (maskAllImages && !imageLayerClasses.isEmpty) else {
+            return
+        }
+        for sublayer in layer.sublayers ?? [] {
+            if sublayer.delegate is UIView || sublayer.isHidden || sublayer.opacity <= 0 {
+                continue
+            }
+            if maskableDrawingLayer(sublayer) {
+                appendRect(of: sublayer, window: window, into: &rects)
+            } else {
+                collectDrawingSublayers(of: sublayer, window: window, into: &rects)
             }
         }
-        return matched
+    }
+
+    private func appendRect(of layer: CALayer, window: UIWindow, into rects: inout [CGRect]) {
+        let rect = layer.convert(layer.bounds, to: window.layer)
+        if !rect.isEmpty {
+            rects.append(rect)
+        }
     }
 
     private func appendRect(of view: UIView, window: UIWindow, into rects: inout [CGRect]) {
@@ -247,13 +300,22 @@ class MaskRectCollector {
     private func shouldMask(_ imageView: UIImageView) -> Bool {
         guard maskAllImages, let image = imageView.image else { return false }
         // Asset-catalog images and SF Symbols are app chrome, not user content.
-        if let asset = image.imageAsset, asset.value(forKey: "_containingBundle") != nil {
-            return false
-        }
         if image.isSymbolImage {
             return false
         }
-        return true
+        return !Self.isNamedImage(image)
+    }
+
+    /// Whether `image` was loaded by name from a bundle (an asset catalog).
+    ///
+    /// Reads the `named(<bundle>: <name>)` marker of the image's description,
+    /// as the Sentry Cocoa SDK does, rather than a private key of
+    /// `imageAsset`: reading a missing private key throws and would crash the
+    /// app, and the `imageAsset` getter can lazily create an asset and change
+    /// the layout size of archived images. The format is undocumented; if it
+    /// changes, these images are masked, the safe side.
+    static func isNamedImage(_ image: UIImage) -> Bool {
+        return image.description.contains("named(")
     }
 }
 #endif

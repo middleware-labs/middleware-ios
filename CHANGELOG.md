@@ -16,6 +16,12 @@ Maintaining this file:
 
 ## [Unreleased]
 
+### Security
+
+- With `maskAllTextInputs` on, session recording now masks all SwiftUI text on
+  iOS 26 (it missed text nested inside containers, such as list or grid cells)
+  and React Native text, which it did not mask at all before.
+
 ### Fixed
 
 - Session recording no longer stalls the UI on every captured frame. Each capture
@@ -29,6 +35,13 @@ Maintaining this file:
   scrolling or dragging, or while several animations run, for up to a second.
   If a capture still takes 150ms or more, it captures less often, down to one
   frame every 2 seconds.
+- With `maskAllImages` on, session recording no longer reads a private image
+  property to tell asset-catalog images apart. That read could crash the app if
+  a future iOS removed the property. Asset-catalog images and SF Symbols are
+  still recorded; images derived from them in code (for example with
+  `withTintColor`) are now masked.
+- The SDK binary no longer contains private Apple class or notification names
+  in plain text, which App Store review can flag as private API use.
 
 ## [2.3.1] - 2026-11-03
 

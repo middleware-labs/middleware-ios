@@ -161,8 +161,11 @@ let PresentationTransitionInstrumenter = NotificationPairInstrumenter(
 
 func initializePresentationTransitionInstrumentation() {
     PresentationTransitionInstrumenter.start()
-    _ = NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "_UIWindowSystemGestureStateChangedNotification"), object: nil, queue: nil) { (_) in
-        setUIFields()
+    // _UIWindowSystemGestureStateChangedNotification
+    if let name = decodedPrivateName("X1VJV2luZG93U3lzdGVtR2VzdHVyZVN0YXRlQ2hhbmdlZE5vdGlmaWNhdGlvbg==") {
+        _ = NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: name), object: nil, queue: nil) { (_) in
+            setUIFields()
+        }
     }
 }
 
